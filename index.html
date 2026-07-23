@@ -132,6 +132,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .center-panel{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
 .section-title{font-size:14px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
 .section-title .badge{font-size:9px;padding:2px 8px;border-radius:10px;background:var(--accent);color:white;font-weight:600;}
+.section-title .badge.badge-period{background:var(--blue);}
 .kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
 .kpi-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;border:1px solid var(--border);transition:all var(--transition);cursor:default;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-accent-line);}
@@ -349,7 +350,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
           </table>
         </div>
       </div>
-      <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span></div><div class="kpi-row" id="kpi-row"></div></div>
+      <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span><span class="badge badge-period" id="kpiPeriodBadge">Latest Week: Week 13</span></div><div class="kpi-row" id="kpi-row"></div></div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-row three">
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon.<ul><li><b>Solid blue</b> = A1 Baseline</li><li><b>Dashed teal</b> = A2 Optimistic</li></ul></div></div></div><canvas id="forecastChart"></canvas></div>
@@ -739,22 +740,27 @@ function updateDerivedWeeklyCells(derived){
 
 /* ============ KPI ============ */
 function renderKPIs(derived){
-  const all=idxAll();
-  const handled1=aggVals(weeklyData.handled.a1,all,'sum',0), handled2=aggVals(weeklyData.handled.a2,all,'sum',0);
-  const reqHC1=aggVals(derived.reqHC.a1,all,'avg',0), reqHC2=aggVals(derived.reqHC.a2,all,'avg',0);
-  const ar1=aggVals(weeklyData.ar.a1,all,'avg',1), ar2=aggVals(weeklyData.ar.a2,all,'avg',1);
-  const occ1=aggVals(derived.occ.a1,all,'avg',1), occ2=aggVals(derived.occ.a2,all,'avg',1);
-  const util1=aggVals(derived.util.a1,all,'avg',1), util2=aggVals(derived.util.a2,all,'avg',1);
-  const prod1=aggVals(derived.prod.a1,all,'avg',1), prod2=aggVals(derived.prod.a2,all,'avg',1);
+  const periods=getPeriods();
+  const latest=periods[periods.length-1];
+  const idx=latest.idx;
+  const handled1=aggVals(weeklyData.handled.a1,idx,'sum',0), handled2=aggVals(weeklyData.handled.a2,idx,'sum',0);
+  const reqHC1=aggVals(derived.reqHC.a1,idx,'avg',0), reqHC2=aggVals(derived.reqHC.a2,idx,'avg',0);
+  const ar1=aggVals(weeklyData.ar.a1,idx,'avg',1), ar2=aggVals(weeklyData.ar.a2,idx,'avg',1);
+  const occ1=aggVals(derived.occ.a1,idx,'avg',1), occ2=aggVals(derived.occ.a2,idx,'avg',1);
+  const util1=aggVals(derived.util.a1,idx,'avg',1), util2=aggVals(derived.util.a2,idx,'avg',1);
+  const prod1=aggVals(derived.prod.a1,idx,'avg',1), prod2=aggVals(derived.prod.a2,idx,'avg',1);
   const pct=(a,b)=>a?((b-a)/a*100):0;
   const kpis=[
-    {title:'Forecast (Handled) — 13-Wk Total',v1:fmt(handled1),v2:fmt(handled2),delta:handled2-handled1,pct:pct(handled1,handled2)},
-    {title:'Avg Required Headcount',v1:fmt(reqHC1),v2:fmt(reqHC2),delta:reqHC2-reqHC1,pct:pct(reqHC1,reqHC2)},
-    {title:'Avg SLA (AR%)',v1:ar1.toFixed(1)+'%',v2:ar2.toFixed(1)+'%',delta:ar2-ar1,pct:null,suffix:' pp'},
-    {title:'Avg Occupancy',v1:occ1.toFixed(1)+'%',v2:occ2.toFixed(1)+'%',delta:occ2-occ1,pct:null,suffix:' pp'},
-    {title:'Avg Utilization',v1:util1.toFixed(1)+'%',v2:util2.toFixed(1)+'%',delta:util2-util1,pct:null,suffix:' pp'},
-    {title:'Avg Productivity (C/HC)',v1:prod1.toFixed(1),v2:prod2.toFixed(1),delta:prod2-prod1,pct:pct(prod1,prod2)},
+    {title:'Forecast (Handled)',v1:fmt(handled1),v2:fmt(handled2),delta:handled2-handled1,pct:pct(handled1,handled2)},
+    {title:'Required Headcount',v1:fmt(reqHC1),v2:fmt(reqHC2),delta:reqHC2-reqHC1,pct:pct(reqHC1,reqHC2)},
+    {title:'SLA (AR%)',v1:ar1.toFixed(1)+'%',v2:ar2.toFixed(1)+'%',delta:ar2-ar1,pct:null,suffix:' pp'},
+    {title:'Occupancy',v1:occ1.toFixed(1)+'%',v2:occ2.toFixed(1)+'%',delta:occ2-occ1,pct:null,suffix:' pp'},
+    {title:'Utilization',v1:util1.toFixed(1)+'%',v2:util2.toFixed(1)+'%',delta:util2-util1,pct:null,suffix:' pp'},
+    {title:'Productivity (C/HC)',v1:prod1.toFixed(1),v2:prod2.toFixed(1),delta:prod2-prod1,pct:pct(prod1,prod2)},
   ];
+  const periodLabel = viewMode==='quarterly' ? `Latest Quarter: ${latest.label}` : `Latest Week: ${latest.label}`;
+  const badge=document.getElementById('kpiPeriodBadge');
+  if(badge) badge.textContent=periodLabel;
   document.getElementById('kpi-row').innerHTML=kpis.map(k=>{
     const cls=k.delta>=0?'pos':'neg';const sign=k.delta>=0?'+':'';
     return`<div class="kpi-card"><div class="kpi-title">${k.title}</div><div class="kpi-values"><div class="kpi-val">${k.v1}<small>A1</small></div><div class="kpi-val">${k.v2}<small>A2</small></div></div><span class="kpi-delta ${cls}">${k.delta>=0?'▲':'▼'} ${sign}${k.delta.toFixed(1)}${k.suffix||''}${k.pct!==null?' ('+sign+k.pct.toFixed(2)+'%)':''}</span></div>`;
