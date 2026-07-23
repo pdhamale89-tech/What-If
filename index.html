@@ -174,6 +174,9 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .weekly-table td.wk-param{position:sticky;left:0;background:var(--bg-card);text-align:left;font-weight:500;color:var(--text-primary);z-index:2;border-right:1px solid var(--border);white-space:nowrap;}
 .weekly-table tr.wk-section-row td{background:var(--bg-card);color:var(--accent);font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:0.5px;}
 .weekly-table tr.wk-section-row td.wk-param{background:var(--bg-card);}
+.weekly-table tr.wk-collapsible{cursor:pointer;user-select:none;}
+.weekly-table tr.wk-collapsible:hover td{background:var(--bg-hover);}
+.weekly-table .wk-chevron{display:inline-block;width:10px;font-size:8px;}
 .weekly-table tbody tr:hover td{background:var(--bg-hover);}
 .weekly-table tbody tr:hover td.wk-param{background:var(--bg-hover);}
 .wk-input{width:52px;padding:2px 3px;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text-primary);font-size:10px;font-family:var(--font);text-align:center;outline:none;}
@@ -477,6 +480,7 @@ function buildInitialWeeklyData(mult){
 let weeklyData = buildInitialWeeklyData();
 let savedNotes=[];
 let viewMode='weekly';
+const collapsedGroups=new Set();
 
 let forecastChartInst,auxChartInst,trainingChartInst;
 Chart.register(ChartDataLabels);
@@ -664,16 +668,16 @@ const weeklyRowDefs=[
   {key:'handled',label:'Handled',dec:0,step:1,agg:'sum'},
   {key:'aht',label:'AHT',dec:0,step:1,agg:'avg'},
   {key:'absent',label:'Absent%',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {label:'AUX States',header:true},
-  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,step:0.1,agg:'avg'},
+  {label:'AUX States',header:true,group:'aux'},
+  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
   {key:'avail',label:'Avail%',suffix:'%',dec:1,step:0.1,agg:'avg'},
   {key:'staffed',label:'Staffed',dec:1,step:0.1,agg:'avg'},
   {key:'conc',label:'Conc',dec:0,step:1,agg:'avg'},
@@ -687,6 +691,12 @@ const weeklyRowDefs=[
   {key:'hcgap',label:'HC Gap',dec:0,agg:'last',derived:true},
   {key:'sl',label:'SL%',suffix:'%',dec:1,agg:'avg',derived:true},
 ];
+
+function toggleGroup(group){
+  if(collapsedGroups.has(group)) collapsedGroups.delete(group);
+  else collapsedGroups.add(group);
+  renderWeeklyTable();
+}
 
 function onWeeklyInput(el){
   const key=el.dataset.key, side=el.dataset.side, wk=+el.dataset.week;
@@ -704,7 +714,12 @@ function renderWeeklyTable(){
 
   const derived=computeDerivedWeekly(weeklyData);
   document.getElementById('weeklyBody').innerHTML=weeklyRowDefs.map(r=>{
-    if(r.header) return `<tr class="wk-section-row"><td class="wk-param">${r.label}</td><td colspan="${periods.length*2}"></td></tr>`;
+    if(r.header){
+      const collapsed=r.group&&collapsedGroups.has(r.group);
+      const chevron=collapsed?'▶':'▼';
+      return `<tr class="wk-section-row wk-collapsible" onclick="toggleGroup('${r.group}')"><td class="wk-param"><span class="wk-chevron">${chevron}</span> ${r.label}</td><td colspan="${periods.length*2}"></td></tr>`;
+    }
+    if(r.group&&collapsedGroups.has(r.group)) return '';
     let cells='';
     periods.forEach((p,pi)=>{
       ['a1','a2'].forEach(side=>{
