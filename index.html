@@ -358,7 +358,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       <div class="chart-row three">
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon.<ul><li><b>Solid blue</b> = A1 Baseline</li><li><b>Dashed teal</b> = A2 Optimistic</li></ul></div></div></div><canvas id="forecastChart"></canvas></div>
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="auxChartTitle">AUX STATES TREND (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Total auxiliary (non-productive) time as a % of staffed time, per period.<ul><li>Compares A1 vs A2</li><li>Lower is generally better for productivity</li></ul></div></div></div><canvas id="auxChart"></canvas></div>
-        <div class="chart-card"><div class="chart-card-header"><h3>TRAINING RAMP (New Hires)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>New hire proficiency curve over training weeks. Steeper = faster ramp to production.</div></div></div><canvas id="trainingChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><h3 id="trainingChartTitle">TRAINING RAMP (Weekly)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>New hire proficiency curve over the horizon. Steeper = faster ramp to production.</div></div></div><canvas id="trainingChart"></canvas></div>
       </div>
     </div>
 
@@ -616,6 +616,7 @@ function setViewMode(mode){
   document.getElementById('weeklyViewTitle').textContent = mode==='quarterly' ? '📅 QUARTERLY PARAMETER VIEW' : '📅 13-WEEK PARAMETER VIEW';
   document.getElementById('forecastChartTitle').textContent = mode==='quarterly' ? 'FORECAST COMPARISON (Quarterly)' : 'FORECAST COMPARISON (Weekly)';
   document.getElementById('auxChartTitle').textContent = mode==='quarterly' ? 'AUX STATES TREND (Quarterly)' : 'AUX STATES TREND (Weekly)';
+  document.getElementById('trainingChartTitle').textContent = mode==='quarterly' ? 'TRAINING RAMP (Quarterly)' : 'TRAINING RAMP (Weekly)';
   recalculate();
 }
 function getPeriods(){
@@ -669,15 +670,15 @@ const weeklyRowDefs=[
   {key:'aht',label:'AHT',dec:0,step:1,agg:'avg'},
   {key:'absent',label:'Absent%',suffix:'%',dec:1,step:0.1,agg:'avg'},
   {label:'AUX States',header:true,group:'aux'},
-  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
-  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux'},
+  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
+  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
   {key:'avail',label:'Avail%',suffix:'%',dec:1,step:0.1,agg:'avg'},
   {key:'staffed',label:'Staffed',dec:1,step:0.1,agg:'avg'},
   {key:'conc',label:'Conc',dec:0,step:1,agg:'avg'},
@@ -726,7 +727,7 @@ function renderWeeklyTable(){
         if(r.derived){
           const val=aggVals(derived[r.key][side],p.idx,r.agg,r.dec);
           cells+=`<td id="wkd_${r.key}_${side}_${pi}">${val}${r.suffix||''}</td>`;
-        } else if(viewMode==='weekly'){
+        } else if(viewMode==='weekly'&&!r.readonly){
           const wi=p.idx[0];
           const val=weeklyData[r.key][side][wi];
           cells+=`<td><input class="wk-input" data-key="${r.key}" data-side="${side}" data-week="${wi}" type="number" step="${r.step||1}" value="${val}" oninput="onWeeklyInput(this)"></td>`;
@@ -809,11 +810,16 @@ function renderAuxChart(derived){
 
 function renderTrainingChart(){
   const ctx=document.getElementById('trainingChart').getContext('2d');if(trainingChartInst)trainingChartInst.destroy();const c=cc();
-  const weeksLbl=['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6'];
+  const periods=getPeriods();
+  const labels=periods.map(p=>p.label);
   const t1=aggVals(weeklyData.training.a1,idxAll(),'avg',0)||6, t2=aggVals(weeklyData.training.a2,idxAll(),'avg',0)||6;
-  const a1D=weeksLbl.map((_,i)=>Math.min(100,Math.round(20+(65/(Math.max(t1,2)-1))*i+(i>3?5:0))));
-  const a2D=weeksLbl.map((_,i)=>Math.min(100,Math.round(25+(65/(Math.max(t2,2)-1))*i+(i>3?5:0))));
-  trainingChartInst=new Chart(ctx,{type:'line',data:{labels:weeksLbl,datasets:[
+  const rampVal=(t,i)=>Math.min(100,Math.round(20+(65/(Math.max(t,2)-1))*i+(i>3?5:0)));
+  const rampVal2=(t,i)=>Math.min(100,Math.round(25+(65/(Math.max(t,2)-1))*i+(i>3?5:0)));
+  const perWeek1=Array.from({length:WEEKS},(_,i)=>rampVal(t1,i));
+  const perWeek2=Array.from({length:WEEKS},(_,i)=>rampVal2(t2,i));
+  const a1D=periods.map(p=>aggVals(perWeek1,p.idx,'avg',0));
+  const a2D=periods.map(p=>aggVals(perWeek2,p.idx,'avg',0));
+  trainingChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'A1 (Baseline)',data:a1D,borderColor:c.blue,backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,borderWidth:2,pointRadius:5,pointBackgroundColor:c.blue,datalabels:{display:true,color:c.blue,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
     {label:'A2 (Optimistic)',data:a2D,borderColor:c.teal,backgroundColor:'rgba(6,182,212,0.1)',fill:true,tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:5,pointBackgroundColor:c.teal,datalabels:{display:true,color:c.teal,anchor:'end',align:'bottom',offset:4,font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{min:0,max:110,grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
