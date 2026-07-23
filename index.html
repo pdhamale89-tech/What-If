@@ -1,0 +1,863 @@
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What-If Simulation Workspace</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{--font:'Inter',sans-serif;--transition:0.3s ease;--radius:8px;--radius-sm:4px;}
+[data-theme="dark"]{
+  --bg-page:#0a1628;--bg-card:#1a2332;--bg-panel:#0f1923;--bg-header:#0b1726;
+  --bg-input:#162033;--bg-hover:rgba(30,58,95,0.25);--bg-row-alt:rgba(30,58,95,0.1);
+  --bg-section-header:#12202f;--bg-filter:#0d1b2e;
+  --text-primary:#e2e8f0;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --accent:#06b6d4;--accent-hover:#22d3ee;--accent-glow:rgba(6,182,212,0.15);
+  --border:#1e3a5f;--border-light:rgba(30,58,95,0.5);
+  --green:#22c55e;--green-bg:rgba(34,197,94,0.1);
+  --red:#ef4444;--red-bg:rgba(239,68,68,0.1);
+  --yellow:#f59e0b;--blue:#3b82f6;--teal:#14b8a6;
+  --chart-grid:rgba(30,58,95,0.5);
+  --shadow:0 4px 24px rgba(0,0,0,0.3);--shadow-sm:0 2px 8px rgba(0,0,0,0.2);
+  --kpi-accent-line:linear-gradient(90deg,#06b6d4,#3b82f6);
+  --toast-bg:#1a2332;--scrollbar-track:#0f1923;--scrollbar-thumb:#1e3a5f;
+  --param-num-bg:rgba(6,182,212,0.15);--param-num-color:#06b6d4;
+  --notes-header-bg:#0d4f6b;--filter-bg:#0d1b2e;--filter-border:#1a3555;
+}
+[data-theme="light"]{
+  --bg-page:#f1f5f9;--bg-card:#ffffff;--bg-panel:#f8fafc;--bg-header:#ffffff;
+  --bg-input:#f1f5f9;--bg-hover:rgba(0,0,0,0.04);--bg-row-alt:rgba(0,0,0,0.02);
+  --bg-section-header:#eef2f7;--bg-filter:#f0f4f8;
+  --text-primary:#1e293b;--text-secondary:#64748b;--text-muted:#94a3b8;
+  --accent:#0891b2;--accent-hover:#06b6d4;--accent-glow:rgba(8,145,178,0.1);
+  --border:#e2e8f0;--border-light:rgba(0,0,0,0.06);
+  --green:#16a34a;--green-bg:rgba(22,163,74,0.08);
+  --red:#dc2626;--red-bg:rgba(220,38,38,0.08);
+  --yellow:#d97706;--blue:#2563eb;--teal:#0d9488;
+  --chart-grid:rgba(0,0,0,0.06);
+  --shadow:0 4px 24px rgba(0,0,0,0.08);--shadow-sm:0 2px 8px rgba(0,0,0,0.05);
+  --kpi-accent-line:linear-gradient(90deg,#0891b2,#2563eb);
+  --toast-bg:#ffffff;--scrollbar-track:#f1f5f9;--scrollbar-thumb:#cbd5e1;
+  --param-num-bg:rgba(8,145,178,0.1);--param-num-color:#0891b2;
+  --notes-header-bg:#0891b2;--filter-bg:#eef2f7;--filter-border:#dde3ea;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary);transition:background var(--transition),color var(--transition);overflow:hidden;height:100vh;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--scrollbar-track);}
+::-webkit-scrollbar-thumb{background:var(--scrollbar-thumb);border-radius:3px;}
+
+#skeleton-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-page);z-index:10000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;transition:opacity 0.5s ease;}
+#skeleton-overlay.hidden{opacity:0;pointer-events:none;}
+.skeleton-bar{width:300px;height:12px;border-radius:6px;background:linear-gradient(90deg,var(--border) 25%,var(--bg-card) 50%,var(--border) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
+.skeleton-bar:nth-child(2){width:240px}.skeleton-bar:nth-child(3){width:200px}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+/* HEADER */
+.header{display:flex;align-items:center;gap:8px;padding:0 16px;height:50px;background:var(--bg-header);border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:1000;transition:background var(--transition),border var(--transition);}
+.header-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;white-space:nowrap;color:var(--text-primary);}
+.header-logo svg{width:24px;height:24px;fill:var(--accent);}
+.header-sep{width:1px;height:28px;background:var(--border);margin:0 4px;}
+.header select{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;font-family:var(--font);cursor:pointer;outline:none;transition:border var(--transition),background var(--transition);}
+.header select:focus{border-color:var(--accent);}
+.header label{font-size:10px;color:var(--text-muted);display:flex;flex-direction:column;gap:1px;}
+.toggle-wrap{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:background var(--transition);}
+.toggle-switch.active{background:var(--accent);}
+.toggle-switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:white;transition:transform var(--transition);}
+.toggle-switch.active::after{transform:translateX(16px);}
+.header-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:all var(--transition);}
+.header-btn:hover{border-color:var(--accent);color:var(--accent);}
+.header-btn.primary{background:var(--green);border-color:var(--green);color:white;font-weight:600;}
+.header-btn.primary:hover{background:#16a34a;}
+.header-spacer{flex:1;}
+.theme-toggle{width:32px;height:32px;border-radius:50%;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all var(--transition);}
+.theme-toggle:hover{border-color:var(--accent);}
+
+/* ===== FILTER BAR ===== */
+.filter-bar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 16px;
+  background:var(--filter-bg);
+  border-bottom:1px solid var(--border);
+  position:fixed;top:50px;left:0;right:0;z-index:999;
+  transition:background var(--transition),border var(--transition);
+  flex-wrap:wrap;
+  min-height:46px;
+}
+.filter-bar .filter-label{
+  font-size:11px;font-weight:700;color:var(--accent);
+  display:flex;align-items:center;gap:4px;
+  white-space:nowrap;letter-spacing:0.3px;
+}
+.filter-group{
+  display:flex;flex-direction:column;gap:1px;
+}
+.filter-group label{
+  font-size:9px;font-weight:600;color:var(--text-muted);
+  text-transform:uppercase;letter-spacing:0.5px;
+}
+.filter-group select{
+  background:var(--bg-input);color:var(--text-primary);
+  border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:4px 24px 4px 8px;font-size:11px;font-family:var(--font);
+  cursor:pointer;outline:none;min-width:130px;
+  transition:all var(--transition);
+  -webkit-appearance:none;-moz-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+}
+.filter-group select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow);}
+.filter-group select:hover{border-color:var(--accent);}
+.filter-sep{width:1px;height:30px;background:var(--border);margin:0 2px;}
+.filter-reset-btn{
+  padding:5px 12px;font-size:11px;font-family:var(--font);font-weight:600;
+  border:1px solid var(--red);border-radius:var(--radius-sm);
+  background:var(--red-bg);color:var(--red);cursor:pointer;
+  transition:all var(--transition);white-space:nowrap;
+  display:flex;align-items:center;gap:4px;
+}
+.filter-reset-btn:hover{background:var(--red);color:white;}
+.filter-active-count{
+  font-size:9px;font-weight:700;padding:2px 6px;
+  border-radius:10px;background:var(--accent);color:white;
+  min-width:18px;text-align:center;
+}
+
+/* LAYOUT */
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg-panel);padding:0 16px;min-height:36px;position:fixed;top:96px;left:0;right:0;z-index:998;transition:background var(--transition);}
+.tab-btn{padding:8px 20px;font-size:12px;font-family:var(--font);font-weight:500;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;transition:all var(--transition);}
+.tab-btn:hover{color:var(--text-primary);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-content{display:none;}
+.tab-content.active{display:flex;flex:1;overflow:hidden;}
+
+/* LEFT PANEL */
+.left-panel{width:400px;min-width:400px;background:var(--bg-panel);border-right:1px solid var(--border);overflow-y:auto;overflow-x:hidden;transition:background var(--transition),border var(--transition);padding-bottom:20px;}
+.accordion-section{border-bottom:1px solid var(--border);}
+.accordion-header{display:flex;align-items:center;gap:10px;padding:12px 16px;cursor:pointer;background:var(--bg-section-header);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--accent);transition:background var(--transition);user-select:none;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--border);}
+.accordion-header:hover{background:var(--bg-hover);}
+.accordion-header .section-icon{width:28px;height:28px;border-radius:6px;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:14px;}
+.accordion-header .chevron{margin-left:auto;font-size:12px;color:var(--text-muted);transition:transform var(--transition);}
+.accordion-header.collapsed .chevron{transform:rotate(-90deg);}
+.accordion-body{overflow:hidden;transition:max-height 0.4s ease;}
+.accordion-body.collapsed{max-height:0 !important;overflow:hidden;}
+.param-table-header{display:grid;grid-template-columns:32px 1fr 85px 85px 72px;padding:6px 16px;font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;background:var(--bg-card);border-bottom:1px solid var(--border);}
+.param-table{width:100%;font-size:11px;}
+.param-row{display:grid;grid-template-columns:32px 1fr 85px 85px 72px;align-items:center;gap:0;padding:0 16px;border-bottom:1px solid var(--border-light);min-height:34px;transition:background var(--transition);}
+.param-row:hover{background:var(--bg-hover);}
+.param-row .row-num{font-size:10px;font-weight:700;color:var(--param-num-color);background:var(--param-num-bg);width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;}
+.param-row .param-label{display:flex;align-items:center;gap:6px;color:var(--text-primary);font-weight:500;font-size:11px;padding-left:4px;}
+.param-row.sub-row{grid-template-columns:1fr 75px 75px 65px;padding-left:52px;min-height:30px;background:var(--bg-row-alt);}
+.param-row.sub-row:hover{background:var(--bg-hover);}
+.param-row.sub-row .param-label{font-weight:400;color:var(--text-secondary);font-size:10px;}
+.param-row.section-subheader{background:var(--bg-card);border-bottom:1px solid var(--border);min-height:30px;}
+.param-row.section-subheader .param-label{font-weight:700;color:var(--accent);font-size:10px;text-transform:uppercase;}
+.editable-input{width:100%;padding:4px 8px;background:var(--bg-input);border:1px solid transparent;border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:var(--font);text-align:right;transition:all var(--transition);outline:none;height:26px;}
+.editable-input:hover{border-color:var(--border);background:var(--bg-card);}
+.editable-input:focus{border-color:var(--accent);background:var(--bg-card);box-shadow:0 0 0 2px var(--accent-glow);}
+.delta-val{text-align:right;font-weight:600;font-size:10px;padding:2px 6px;border-radius:3px;}
+.delta-pos{color:var(--green);background:var(--green-bg);}
+.delta-neg{color:var(--red);background:var(--red-bg);}
+.delta-zero{color:var(--text-muted);}
+.slider-wrap{display:flex;align-items:center;gap:4px;justify-content:flex-end;}
+.slider-input{-webkit-appearance:none;width:48px;height:4px;background:var(--border);border-radius:2px;outline:none;cursor:pointer;}
+.slider-input::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 4px var(--accent-glow);}
+.slider-val{font-size:10px;min-width:32px;text-align:right;color:var(--text-primary);font-weight:600;}
+.stepper{display:flex;align-items:center;gap:3px;justify-content:flex-end;}
+.stepper-btn{width:24px;height:24px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-input);color:var(--text-primary);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all var(--transition);font-weight:700;}
+.stepper-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-glow);}
+.stepper-val{width:28px;text-align:center;font-weight:700;font-size:13px;color:var(--accent);}
+.mix-badges{display:flex;gap:3px;justify-content:flex-end;}
+.mix-badge{padding:2px 4px;border-radius:3px;font-size:9px;font-weight:600;background:var(--accent-glow);color:var(--accent);display:flex;align-items:center;gap:2px;}
+.mix-badge input{width:26px;text-align:center;padding:1px 2px;background:transparent;border:none;color:var(--text-primary);font-size:10px;font-family:var(--font);font-weight:700;outline:none;}
+.mix-badge input:focus{background:var(--bg-input);border-radius:2px;}
+.add-custom{padding:10px 16px;font-size:12px;color:var(--accent);cursor:pointer;font-weight:500;display:flex;align-items:center;gap:6px;transition:all var(--transition);}
+.add-custom:hover{background:var(--accent-glow);}
+
+/* CENTER */
+.center-panel{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
+.section-title{font-size:14px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.section-title .badge{font-size:9px;padding:2px 8px;border-radius:10px;background:var(--accent);color:white;font-weight:600;}
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
+.kpi-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;border:1px solid var(--border);transition:all var(--transition);cursor:default;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-accent-line);}
+.kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
+.kpi-card .kpi-title{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;}
+.kpi-values{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;}
+.kpi-val{font-size:18px;font-weight:700;color:var(--text-primary);line-height:1;}
+.kpi-val small{font-size:9px;color:var(--text-muted);font-weight:400;display:block;margin-top:2px;}
+.kpi-delta{font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:3px;}
+.kpi-delta.pos{color:var(--green);background:var(--green-bg);}
+.kpi-delta.neg{color:var(--red);background:var(--red-bg);}
+.chart-row{display:grid;gap:12px;}
+.chart-row.three{grid-template-columns:repeat(3,1fr);}
+.chart-row.two{grid-template-columns:repeat(2,1fr);}
+.chart-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);transition:all var(--transition);position:relative;}
+.chart-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.chart-card-header h3{font-size:12px;font-weight:700;color:var(--text-primary);}
+.chart-card-header .chart-subtitle{font-size:10px;color:var(--text-muted);margin-top:2px;}
+.chart-info-btn{width:22px;height:22px;border-radius:50%;background:var(--accent-glow);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:700;font-style:italic;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);position:relative;flex-shrink:0;margin-left:8px;}
+.chart-info-btn:hover{background:var(--accent);color:white;}
+.chart-info-tooltip{display:none;position:absolute;top:28px;right:0;width:260px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--accent);border-radius:var(--radius);box-shadow:var(--shadow);font-size:11px;font-style:normal;font-weight:400;color:var(--text-primary);z-index:100;line-height:1.5;}
+.chart-info-tooltip .tip-title{font-weight:700;color:var(--accent);font-size:11px;margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+.chart-info-tooltip ul{margin:4px 0 0 14px;color:var(--text-secondary);font-size:10px;}
+.chart-info-tooltip ul li{margin-bottom:2px;}
+.chart-info-btn:hover .chart-info-tooltip{display:block;}
+.chart-card canvas{width:100% !important;max-height:220px;}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;}
+.data-table th{text-align:left;padding:6px 8px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.3px;}
+.data-table td{padding:5px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary);}
+.data-table tr:hover td{background:var(--bg-hover);}
+.impact-bar{display:inline-block;height:8px;border-radius:4px;min-width:4px;vertical-align:middle;margin-right:6px;}
+
+/* RIGHT PANEL */
+.right-panel{width:310px;min-width:310px;background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;transition:background var(--transition),border var(--transition);}
+.right-section{padding:14px;border-bottom:1px solid var(--border);}
+.right-section-title{font-size:12px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.right-section-title .actions{display:flex;gap:8px;}
+.right-section-title .action-icon{cursor:pointer;color:var(--text-muted);font-size:14px;transition:color var(--transition);}
+.right-section-title .action-icon:hover{color:var(--accent);}
+.audit-table{width:100%;font-size:10px;}
+.audit-table th{text-align:left;padding:4px 4px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:9px;text-transform:uppercase;}
+.audit-table td{padding:4px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);}
+.audit-table tr:nth-child(even) td{background:var(--bg-row-alt);}
+.view-all-link{display:block;text-align:center;font-size:11px;color:var(--accent);cursor:pointer;padding:8px;font-weight:500;}
+.view-all-link:hover{text-decoration:underline;}
+.notes-wrap{display:flex;flex-direction:column;gap:8px;}
+.notes-textarea{width:100%;min-height:70px;padding:8px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:var(--font);resize:vertical;outline:none;transition:border var(--transition);line-height:1.5;}
+.notes-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow);}
+.save-note-btn{align-self:flex-end;padding:6px 16px;background:var(--accent);color:white;border:none;border-radius:var(--radius-sm);font-size:11px;font-family:var(--font);font-weight:600;cursor:pointer;transition:background var(--transition);display:flex;align-items:center;gap:4px;}
+.save-note-btn:hover{background:var(--accent-hover);}
+.notes-summary-section{margin-top:4px;}
+.notes-summary-section .ns-title{font-size:11px;font-weight:700;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.notes-history-table{width:100%;border-collapse:collapse;font-size:10px;}
+.notes-history-table thead th{background:var(--notes-header-bg);color:white;padding:7px 8px;text-align:left;font-weight:600;font-size:10px;letter-spacing:0.3px;border-bottom:2px solid var(--accent);}
+.notes-history-table thead th:first-child{border-radius:4px 0 0 0;}
+.notes-history-table thead th:last-child{border-radius:0 4px 0 0;}
+.notes-history-table tbody td{padding:8px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);vertical-align:top;line-height:1.4;}
+.notes-history-table tbody tr:hover td{background:var(--bg-hover);}
+.notes-history-table tbody td:first-child{color:var(--text-primary);font-weight:400;max-width:140px;}
+.notes-history-table .no-notes{text-align:center;padding:16px;color:var(--text-muted);font-style:italic;}
+.toast-container{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:9999;}
+.toast{background:var(--toast-bg);border:1px solid var(--border);border-left:3px solid var(--accent);padding:10px 16px;border-radius:var(--radius);font-size:12px;color:var(--text-primary);box-shadow:var(--shadow);max-width:320px;animation:slideIn 0.3s ease,fadeOut 0.3s ease 2.7s forwards;display:flex;align-items:center;gap:8px;}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(50%)}}
+.export-panel{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+.export-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.export-card h2{font-size:16px;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px;}
+.export-btn{padding:10px 24px;border-radius:var(--radius);font-size:13px;font-family:var(--font);font-weight:600;cursor:pointer;border:none;margin-right:10px;margin-top:12px;transition:all var(--transition);}
+.export-btn.csv{background:var(--accent);color:white;}.export-btn.csv:hover{background:var(--accent-hover);}
+.export-btn.pdf{background:var(--blue);color:white;}.export-btn.pdf:hover{opacity:0.9;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.summary-stat{padding:12px;background:var(--bg-panel);border-radius:var(--radius);border:1px solid var(--border);}
+.summary-stat .label{font-size:10px;color:var(--text-muted);text-transform:uppercase;font-weight:600;}
+.summary-stat .val{font-size:20px;font-weight:700;color:var(--text-primary);margin-top:4px;}
+.summary-stat .sub{font-size:10px;color:var(--text-muted);margin-top:2px;}
+
+/* Active filter tag */
+.filter-active-tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-left:4px;}
+.filter-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;background:var(--accent-glow);border:1px solid var(--accent);color:var(--accent);font-size:9px;font-weight:600;white-space:nowrap;}
+.filter-tag .tag-remove{cursor:pointer;font-size:11px;font-weight:700;margin-left:2px;opacity:0.7;}
+.filter-tag .tag-remove:hover{opacity:1;}
+
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}.chart-row.three{grid-template-columns:1fr}.chart-row.two{grid-template-columns:1fr}.filter-bar{flex-wrap:wrap;}}
+@media(max-width:900px){.left-panel,.right-panel{display:none}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div id="skeleton-overlay">
+  <div style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:12px;">⚙ Loading Workspace...</div>
+  <div class="skeleton-bar"></div><div class="skeleton-bar"></div><div class="skeleton-bar"></div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 2a8 8 0 0 1 5.29 2.05l-2.83 2.83a4.98 4.98 0 0 0-4.92 0L6.71 6.05A8 8 0 0 1 12 4zm-8 8a8 8 0 0 1 1.13-4.09l2.83 2.83a4.98 4.98 0 0 0 0 4.92L5.13 16.09A8 8 0 0 1 4 12zm8 8a8 8 0 0 1-5.29-2.05l2.83-2.83a4.98 4.98 0 0 0 4.92 0l2.83 2.83A8 8 0 0 1 12 20zm5.29-2.05l-2.83-2.83a4.98 4.98 0 0 0 0-4.92l2.83-2.83A7.96 7.96 0 0 1 20 12a7.96 7.96 0 0 1-2.71 5.95z"/></svg>
+    WHAT-IF SIMULATION WORKSPACE
+  </div>
+  <div class="header-sep"></div>
+  <label>Scenario Set<select id="scenarioSet"><option>FY26 Planning</option><option>FY25 Actual</option></select></label>
+  <label>Scenario A1<select id="scenarioA1"><option>Baseline</option><option>Conservative</option></select></label>
+  <label>Scenario A2<select id="scenarioA2"><option>Optimistic</option><option>Aggressive</option></select></label>
+  <div class="header-sep"></div>
+  <div class="toggle-wrap">Compare <div class="toggle-switch active" id="compareToggle" onclick="this.classList.toggle('active');recalculate()"></div></div>
+  <div class="header-sep"></div>
+  <button class="header-btn" onclick="resetAll()">🔄 Reset</button>
+  <button class="header-btn" onclick="showToast('↩ Undo performed')">↩ Undo</button>
+  <button class="header-btn" onclick="showToast('↪ Redo performed')">↪ Redo</button>
+  <div class="header-spacer"></div>
+  <button class="header-btn" onclick="showToast('💾 Scenario saved')">💾 Save Scenario</button>
+  <button class="header-btn primary" onclick="showToast('🚀 Published!')">🚀 Publish</button>
+  <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀</div>
+  <div class="theme-toggle" style="font-size:18px" title="More">⋮</div>
+</header>
+
+<!-- ===== FILTER BAR ===== -->
+<div class="filter-bar" id="filterBar">
+  <div class="filter-label">🔍 Filters</div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label>Region</label>
+    <select id="filter_region" onchange="onFilterChange()">
+      <option value="">All Regions</option>
+      <option>Americas</option>
+      <option>EMEA</option>
+      <option>APJ</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Sub Region</label>
+    <select id="filter_subregion" onchange="onFilterChange()">
+      <option value="">All Sub Regions</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Country</label>
+    <select id="filter_country" onchange="onFilterChange()">
+      <option value="">All Countries</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label>Channel</label>
+    <select id="filter_channel" onchange="onFilterChange()">
+      <option value="">All Channels</option>
+      <option>Voice</option>
+      <option>Chat</option>
+      <option>Email</option>
+      <option>Social Media</option>
+      <option>Self-Service</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Offering</label>
+    <select id="filter_offering" onchange="onFilterChange()">
+      <option value="">All Offerings</option>
+      <option>ProSupport</option>
+      <option>ProSupport Plus</option>
+      <option>Basic Support</option>
+      <option>Premium Support</option>
+      <option>Managed Services</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Combined Queue Name</label>
+    <select id="filter_queue" onchange="onFilterChange()">
+      <option value="">All Queues</option>
+      <option>Enterprise_T1_Voice</option>
+      <option>Enterprise_T2_Voice</option>
+      <option>SMB_T1_Chat</option>
+      <option>SMB_T2_Voice</option>
+      <option>Consumer_T1_Voice</option>
+      <option>Consumer_T1_Chat</option>
+      <option>Premium_Escalation</option>
+      <option>Managed_Svc_Queue</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <button class="filter-reset-btn" onclick="resetFilters()">✕ Clear Filters</button>
+  <div class="filter-active-tags" id="activeFilterTags"></div>
+</div>
+
+<!-- TAB BAR + MAIN -->
+<div style="margin-top:132px;display:flex;flex-direction:column;height:calc(100vh - 132px);">
+  <div class="tab-bar" style="position:relative;top:auto;">
+    <button class="tab-btn active" onclick="switchTab('simulation',this)">⚡ Simulation</button>
+    <button class="tab-btn" onclick="switchTab('export',this)">📤 Export / Reports</button>
+  </div>
+
+  <!-- SIMULATION TAB -->
+  <div id="tab-simulation" class="tab-content active">
+    <div class="left-panel">
+      <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)"><span class="section-icon">📞</span> CONTACTS <span class="chevron">▼</span></div>
+        <div class="accordion-body" style="max-height:500px;">
+          <div class="param-table-header"><span>#</span><span>Parameter</span><span style="text-align:right">A1 (Baseline)</span><span style="text-align:right">A2 (Optimistic)</span><span style="text-align:right">Δ (A2-A1)</span></div>
+          <div class="param-table">
+            <div class="param-row"><span class="row-num">1</span><span class="param-label">Forecast</span><input class="editable-input" type="number" id="a1_forecast" value="128450" oninput="recalculate()"><input class="editable-input" type="number" id="a2_forecast" value="122310" oninput="recalculate()"><span class="delta-val" id="delta_forecast"></span></div>
+            <div class="param-row"><span class="row-num">2</span><span class="param-label">Forecast Mod %</span><div class="slider-wrap"><input class="slider-input" type="range" min="-20" max="20" step="0.5" value="5" id="a1_fcmod" oninput="document.getElementById('a1_fcmod_v').textContent=this.value+'%';recalculate()"><span class="slider-val" id="a1_fcmod_v">5%</span></div><div class="slider-wrap"><input class="slider-input" type="range" min="-20" max="20" step="0.5" value="-3" id="a2_fcmod" oninput="document.getElementById('a2_fcmod_v').textContent=this.value+'%';recalculate()"><span class="slider-val" id="a2_fcmod_v">-3%</span></div><span class="delta-val" id="delta_fcmod"></span></div>
+            <div class="param-row"><span class="row-num">3</span><span class="param-label">OSP Mix</span><div class="mix-badges"><span class="mix-badge">DB<input type="number" id="a1_db" value="62" oninput="recalculate()">%</span></div><div class="mix-badges"><span class="mix-badge">DB<input type="number" id="a2_db" value="55" oninput="recalculate()">%</span></div><span class="delta-val" id="delta_osp"></span></div>
+            <div class="param-row"><span class="row-num">4</span><span class="param-label">AR%</span><input class="editable-input" type="number" step="0.1" id="a1_ar" value="88.0" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_ar" value="90.0" oninput="recalculate()"><span class="delta-val" id="delta_ar"></span></div>
+            <div class="param-row"><span class="row-num">5</span><span class="param-label">Handled</span><input class="editable-input" type="number" id="a1_handled" value="113920" oninput="recalculate()"><input class="editable-input" type="number" id="a2_handled" value="110080" oninput="recalculate()"><span class="delta-val" id="delta_handled"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)"><span class="section-icon">📊</span> PRODUCTIVITY ASSUMPTIONS <span class="chevron">▼</span></div>
+        <div class="accordion-body" style="max-height:1000px;">
+          <div class="param-table-header"><span>#</span><span>Parameter</span><span style="text-align:right">A1 (Baseline)</span><span style="text-align:right">A2 (Optimistic)</span><span style="text-align:right">Δ (A2-A1)</span></div>
+          <div class="param-table">
+            <div class="param-row"><span class="row-num">6</span><span class="param-label">AHT (sec)</span><input class="editable-input" type="number" id="a1_aht" value="420" oninput="recalculate()"><input class="editable-input" type="number" id="a2_aht" value="410" oninput="recalculate()"><span class="delta-val" id="delta_aht"></span></div>
+            <div class="param-row"><span class="row-num">7</span><span class="param-label">Absenteeism %</span><input class="editable-input" type="number" step="0.1" id="a1_absent" value="12.0" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_absent" value="11.5" oninput="recalculate()"><span class="delta-val" id="delta_absent"></span></div>
+            <div class="param-row section-subheader"><span class="row-num">8</span><span class="param-label">Aux States %</span><span></span><span></span><span></span></div>
+          </div>
+          <div id="aux-container"></div>
+          <div class="param-table">
+            <div class="param-row"><span class="row-num">9</span><span class="param-label">Availability %</span><input class="editable-input" type="number" step="0.1" id="a1_avail" value="87.0" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_avail" value="87.5" oninput="recalculate()"><span class="delta-val" id="delta_avail"></span></div>
+            <div class="param-row"><span class="row-num">10</span><span class="param-label">Staffed Time (hrs)</span><input class="editable-input" type="number" step="0.1" id="a1_staffed" value="8.5" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_staffed" value="8.6" oninput="recalculate()"><span class="delta-val" id="delta_staffed"></span></div>
+            <div class="param-row"><span class="row-num">11</span><span class="param-label">Concurrency</span><div class="stepper"><button class="stepper-btn" onclick="stepVal('a1_conc',-1)">−</button><span class="stepper-val" id="a1_conc">2</span><button class="stepper-btn" onclick="stepVal('a1_conc',1)">+</button></div><div class="stepper"><button class="stepper-btn" onclick="stepVal('a2_conc',-1)">−</button><span class="stepper-val" id="a2_conc">2</span><button class="stepper-btn" onclick="stepVal('a2_conc',1)">+</button></div><span class="delta-val" id="delta_conc"></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="accordion-section">
+        <div class="accordion-header" onclick="toggleAccordion(this)"><span class="section-icon">👥</span> HEADCOUNT ASSUMPTIONS <span class="chevron">▼</span></div>
+        <div class="accordion-body" style="max-height:500px;">
+          <div class="param-table-header"><span>#</span><span>Parameter</span><span style="text-align:right">A1 (Baseline)</span><span style="text-align:right">A2 (Optimistic)</span><span style="text-align:right">Δ (A2-A1)</span></div>
+          <div class="param-table">
+            <div class="param-row"><span class="row-num">20</span><span class="param-label">Actual HC</span><input class="editable-input" type="number" id="a1_hc" value="684" oninput="recalculate()"><input class="editable-input" type="number" id="a2_hc" value="672" oninput="recalculate()"><span class="delta-val" id="delta_hc"></span></div>
+            <div class="param-row"><span class="row-num">21</span><span class="param-label">Attrition %</span><input class="editable-input" type="number" step="0.1" id="a1_attrition" value="4.0" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_attrition" value="3.8" oninput="recalculate()"><span class="delta-val" id="delta_attrition"></span></div>
+            <div class="param-row"><span class="row-num">22</span><span class="param-label">Movement In</span><input class="editable-input" type="number" id="a1_movin" value="18" oninput="recalculate()"><input class="editable-input" type="number" id="a2_movin" value="18" oninput="recalculate()"><span class="delta-val" id="delta_movin"></span></div>
+            <div class="param-row"><span class="row-num">23</span><span class="param-label">Movement Out</span><input class="editable-input" type="number" id="a1_movout" value="22" oninput="recalculate()"><input class="editable-input" type="number" id="a2_movout" value="20" oninput="recalculate()"><span class="delta-val" id="delta_movout"></span></div>
+            <div class="param-row"><span class="row-num">24</span><span class="param-label">Hiring</span><input class="editable-input" type="number" id="a1_hiring" value="32" oninput="recalculate()"><input class="editable-input" type="number" id="a2_hiring" value="28" oninput="recalculate()"><span class="delta-val" id="delta_hiring"></span></div>
+            <div class="param-row"><span class="row-num">25</span><span class="param-label">Training (Weeks)</span><input class="editable-input" type="number" id="a1_training" value="6" oninput="recalculate()"><input class="editable-input" type="number" id="a2_training" value="6" oninput="recalculate()"><span class="delta-val" id="delta_training"></span></div>
+            <div class="param-row"><span class="row-num">26</span><span class="param-label">OJT/Nesting (Wks)</span><input class="editable-input" type="number" id="a1_ojt" value="4" oninput="recalculate()"><input class="editable-input" type="number" id="a2_ojt" value="4" oninput="recalculate()"><span class="delta-val" id="delta_ojt"></span></div>
+          </div>
+          <div class="add-custom" onclick="showToast('➕ Custom parameter added')">➕ Add Custom Parameter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center-panel">
+      <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span></div><div class="kpi-row" id="kpi-row"></div></div>
+      <div class="section-title">⚙ Analytics</div>
+      <div class="chart-row three">
+        <div class="chart-card"><div class="chart-card-header"><div><h3>HEADCOUNT IMPACT (Waterfall)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Shows how headcount transitions from A1 to A2.<ul><li><b>Green</b> = factors increasing HC</li><li><b>Red</b> = factors decreasing HC</li><li>Final bar = net A2 headcount</li></ul></div></div></div><canvas id="waterfallChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3>DRIVER IMPACT (Tornado)</h3><div class="chart-subtitle">Impact on Headcount</div></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Ranks drivers by absolute HC impact.<ul><li><b>Right (teal)</b> = positive impact</li><li><b>Left (red)</b> = negative impact</li><li>Sorted by magnitude</li></ul></div></div></div><canvas id="tornadoChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3>FORECAST COMPARISON (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Weekly forecast comparison.<ul><li><b>Solid blue</b> = A1 Baseline</li><li><b>Dashed teal</b> = A2 Optimistic</li><li><b>Gray</b> = Actual</li></ul></div></div></div><canvas id="forecastChart"></canvas></div>
+      </div>
+      <div class="chart-row two">
+        <div class="chart-card"><div class="chart-card-header"><h3>DRIVER RANKING (By Impact)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Table</div>Ranks all drivers by absolute HC impact. Color bars indicate direction and magnitude.</div></div></div><table class="data-table" id="driverRankingTable"><thead><tr><th>Rank</th><th>Driver</th><th>Impact on HC</th><th>Impact %</th></tr></thead><tbody></tbody></table></div>
+        <div class="chart-card"><div class="chart-card-header"><h3>IMPACT SUMMARY (A2 vs A1)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Table</div>Side-by-side comparison of key metrics. Green = improvement, Red = decline.</div></div></div><table class="data-table" id="impactSummaryTable"><thead><tr><th>Metric</th><th>A1</th><th>A2</th><th>Δ</th><th>%Δ</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="chart-row two">
+        <div class="chart-card"><div class="chart-card-header"><h3>AUX STATES VISUALIZATION (% of Staffed Time)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Shows agent auxiliary time distribution. Compare A1 vs A2 for efficiency gains.</div></div></div><canvas id="auxChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><h3>TRAINING RAMP (New Hires)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>New hire proficiency curve over training weeks. Steeper = faster ramp to production.</div></div></div><canvas id="trainingChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-panel">
+      <div class="right-section">
+        <div class="right-section-title">📋 AUDIT TRAIL<div class="actions"><span class="action-icon" title="Filter">🔍</span><span class="action-icon" title="Refresh" onclick="showToast('Refreshed')">🔄</span></div></div>
+        <table class="audit-table"><thead><tr><th>When</th><th>User</th><th>Parameter</th><th>From</th><th>To</th></tr></thead><tbody id="auditBody"></tbody></table>
+        <div class="view-all-link" onclick="showToast('Viewing all...')">View All Changes</div>
+      </div>
+      <div class="right-section">
+        <div class="right-section-title">📝 SCENARIO NOTES</div>
+        <div class="notes-wrap">
+          <textarea class="notes-textarea" id="notesArea" placeholder="Type your scenario notes here...">Optimistic scenario with forecast reduction, improved AHT and absenteeism, lower attrition and hiring.</textarea>
+          <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
+        </div>
+      </div>
+      <div class="right-section">
+        <div class="notes-summary-section">
+          <div class="ns-title">📋 NOTES SUMMARY</div>
+          <table class="notes-history-table"><thead><tr><th>Previous SCENARIO NOTES</th><th>Last Updated</th><th>Updated By</th></tr></thead><tbody id="notesHistoryBody"><tr><td colspan="3" class="no-notes">No notes saved yet. Write a note above and click Save.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORT TAB -->
+  <div id="tab-export" class="tab-content">
+    <div class="export-panel">
+      <div class="export-card"><h2>📊 Scenario Summary</h2><div class="summary-grid" id="exportSummaryGrid"></div></div>
+      <div class="export-card"><h2>📋 Full Parameter Comparison</h2><table class="data-table" id="exportTable"><thead><tr><th>#</th><th>Parameter</th><th>A1 (Baseline)</th><th>A2 (Optimistic)</th><th>Δ (A2-A1)</th></tr></thead><tbody></tbody></table></div>
+      <div class="export-card"><h2>📤 Export Options</h2><p style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;">Download current scenario data or generate a printable report.</p><button class="export-btn csv" onclick="exportCSV()">📥 Export to CSV</button><button class="export-btn pdf" onclick="window.print()">🖨 Export to PDF</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+/* ============ FILTER DATA (Cascading) ============ */
+const filterData = {
+  Americas: {
+    subRegions: {
+      'North America': { countries: ['United States','Canada','Mexico'] },
+      'Latin America': { countries: ['Brazil','Argentina','Colombia','Chile'] },
+      'Caribbean': { countries: ['Jamaica','Trinidad & Tobago','Bahamas'] }
+    }
+  },
+  EMEA: {
+    subRegions: {
+      'Western Europe': { countries: ['United Kingdom','Germany','France','Netherlands'] },
+      'Eastern Europe': { countries: ['Poland','Czech Republic','Romania','Hungary'] },
+      'Middle East': { countries: ['UAE','Saudi Arabia','Qatar','Israel'] },
+      'Africa': { countries: ['South Africa','Nigeria','Kenya','Egypt'] }
+    }
+  },
+  APJ: {
+    subRegions: {
+      'South Asia': { countries: ['India','Sri Lanka','Bangladesh'] },
+      'East Asia': { countries: ['Japan','South Korea','China','Taiwan'] },
+      'Southeast Asia': { countries: ['Singapore','Malaysia','Philippines','Thailand'] },
+      'Oceania': { countries: ['Australia','New Zealand'] }
+    }
+  }
+};
+
+// Multipliers for filter-based data variation
+const filterMultipliers = {
+  region: { '': 1, Americas: 1.15, EMEA: 0.92, APJ: 0.88 },
+  channel: { '': 1, Voice: 1.2, Chat: 0.85, Email: 0.7, 'Social Media': 0.55, 'Self-Service': 0.4 },
+  offering: { '': 1, ProSupport: 1.1, 'ProSupport Plus': 1.25, 'Basic Support': 0.75, 'Premium Support': 1.35, 'Managed Services': 0.95 },
+  queue: { '': 1, 'Enterprise_T1_Voice': 1.3, 'Enterprise_T2_Voice': 1.1, 'SMB_T1_Chat': 0.8, 'SMB_T2_Voice': 0.9, 'Consumer_T1_Voice': 0.7, 'Consumer_T1_Chat': 0.6, 'Premium_Escalation': 1.4, 'Managed_Svc_Queue': 0.85 }
+};
+
+/* ============ DATA ============ */
+const auxLabels=['Aux 0','Aux 1','Aux 2','Aux 3','Aux 4','Aux 5','Aux 6','Aux 7','Aux 8','Aux 9'];
+const auxA1Def=[12.0,7.0,6.0,14.0,4.0,2.0,1.0,1.0,1.0,1.0];
+const auxA2Def=[11.0,6.0,6.0,14.0,4.5,2.0,1.0,1.0,1.0,1.0];
+const defaultValues = {
+  a1_forecast:128450,a2_forecast:122310,a1_ar:88.0,a2_ar:90.0,
+  a1_handled:113920,a2_handled:110080,a1_aht:420,a2_aht:410,
+  a1_absent:12.0,a2_absent:11.5,a1_avail:87.0,a2_avail:87.5,
+  a1_staffed:8.5,a2_staffed:8.6,a1_hc:684,a2_hc:672,
+  a1_attrition:4.0,a2_attrition:3.8,a1_movin:18,a2_movin:18,
+  a1_movout:22,a2_movout:20,a1_hiring:32,a2_hiring:28,
+  a1_training:6,a2_training:6,a1_ojt:4,a2_ojt:4,a1_db:62,a2_db:55
+};
+
+let savedNotes=[];
+let auditEntries=[
+  {time:'Today 10:15 AM',user:'Siddharth J.',param:'AHT (sec)',from:'420',to:'410'},
+  {time:'Today 10:14 AM',user:'Siddharth J.',param:'Forecast Modifier',from:'+5.0%',to:'-3.0%'},
+  {time:'Today 10:12 AM',user:'Siddharth J.',param:'DB Mix',from:'62%',to:'55%'},
+  {time:'Today 10:10 AM',user:'Siddharth J.',param:'OSP Mix',from:'38%',to:'45%'},
+  {time:'Today 10:08 AM',user:'Siddharth J.',param:'AR%',from:'88.0%',to:'90.0%'},
+  {time:'Today 10:05 AM',user:'Siddharth J.',param:'Absenteeism',from:'12.0%',to:'11.5%'},
+  {time:'Today 10:02 AM',user:'Siddharth J.',param:'Hiring',from:'32',to:'28'},
+];
+
+let waterfallChartInst,tornadoChartInst,forecastChartInst,auxChartInst,trainingChartInst;
+Chart.register(ChartDataLabels);
+
+/* ============ INIT ============ */
+window.addEventListener('load',()=>{
+  buildAuxRows();renderAuditTrail();recalculate();
+  const saved=localStorage.getItem('theme');
+  if(saved){document.documentElement.setAttribute('data-theme',saved);updateThemeIcon();}
+  setTimeout(()=>{document.getElementById('skeleton-overlay').classList.add('hidden');},600);
+});
+
+/* ============ CASCADING FILTER LOGIC ============ */
+function onFilterChange(source){
+  const region = document.getElementById('filter_region').value;
+  const subRegionSel = document.getElementById('filter_subregion');
+  const countrySel = document.getElementById('filter_country');
+
+  // Cascade: Region → Sub Region
+  if(!source || source === 'region'){
+    subRegionSel.innerHTML = '<option value="">All Sub Regions</option>';
+    countrySel.innerHTML = '<option value="">All Countries</option>';
+    if(region && filterData[region]){
+      Object.keys(filterData[region].subRegions).forEach(sr=>{
+        subRegionSel.innerHTML += `<option>${sr}</option>`;
+      });
+    }
+  }
+
+  // Cascade: Sub Region → Country
+  const subRegion = subRegionSel.value;
+  if(!source || source === 'region' || source === 'subregion'){
+    countrySel.innerHTML = '<option value="">All Countries</option>';
+    if(region && subRegion && filterData[region] && filterData[region].subRegions[subRegion]){
+      filterData[region].subRegions[subRegion].countries.forEach(c=>{
+        countrySel.innerHTML += `<option>${c}</option>`;
+      });
+    } else if(region && filterData[region]){
+      // Show all countries for region
+      Object.values(filterData[region].subRegions).forEach(sr=>{
+        sr.countries.forEach(c=>{ countrySel.innerHTML += `<option>${c}</option>`; });
+      });
+    }
+  }
+
+  updateActiveFilterTags();
+  applyFilterMultipliers();
+  recalculate();
+
+  const activeCount = getActiveFilterCount();
+  showToast(`🔍 Filters applied (${activeCount} active) — Dashboard recalculated`);
+}
+
+// Override onchange to pass source
+document.getElementById('filter_region').onchange = ()=> onFilterChange('region');
+document.getElementById('filter_subregion').onchange = ()=> onFilterChange('subregion');
+document.getElementById('filter_country').onchange = ()=> onFilterChange('country');
+document.getElementById('filter_channel').onchange = ()=> onFilterChange('channel');
+document.getElementById('filter_offering').onchange = ()=> onFilterChange('offering');
+document.getElementById('filter_queue').onchange = ()=> onFilterChange('queue');
+
+function getActiveFilterCount(){
+  let c=0;
+  ['filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
+    if(document.getElementById(id).value) c++;
+  });
+  return c;
+}
+
+function updateActiveFilterTags(){
+  const container = document.getElementById('activeFilterTags');
+  const filters = [
+    {id:'filter_region',label:'Region'},
+    {id:'filter_subregion',label:'Sub Region'},
+    {id:'filter_country',label:'Country'},
+    {id:'filter_channel',label:'Channel'},
+    {id:'filter_offering',label:'Offering'},
+    {id:'filter_queue',label:'Queue'},
+  ];
+  let html='';
+  filters.forEach(f=>{
+    const v=document.getElementById(f.id).value;
+    if(v) html+=`<span class="filter-tag">${f.label}: ${v}<span class="tag-remove" onclick="clearSingleFilter('${f.id}')">✕</span></span>`;
+  });
+  container.innerHTML = html;
+}
+
+function clearSingleFilter(id){
+  document.getElementById(id).value='';
+  if(id==='filter_region') onFilterChange('region');
+  else if(id==='filter_subregion') onFilterChange('subregion');
+  else onFilterChange();
+}
+
+function applyFilterMultipliers(){
+  const region = document.getElementById('filter_region').value;
+  const channel = document.getElementById('filter_channel').value;
+  const offering = document.getElementById('filter_offering').value;
+  const queue = document.getElementById('filter_queue').value;
+
+  const rm = filterMultipliers.region[region] || 1;
+  const cm = filterMultipliers.channel[channel] || 1;
+  const om = filterMultipliers.offering[offering] || 1;
+  const qm = filterMultipliers.queue[queue] || 1;
+  const mult = rm * cm * om * qm;
+
+  // Apply multiplier to volume-related fields
+  document.getElementById('a1_forecast').value = Math.round(defaultValues.a1_forecast * mult);
+  document.getElementById('a2_forecast').value = Math.round(defaultValues.a2_forecast * mult);
+  document.getElementById('a1_handled').value = Math.round(defaultValues.a1_handled * mult);
+  document.getElementById('a2_handled').value = Math.round(defaultValues.a2_handled * mult);
+  document.getElementById('a1_hc').value = Math.round(defaultValues.a1_hc * mult);
+  document.getElementById('a2_hc').value = Math.round(defaultValues.a2_hc * mult);
+  document.getElementById('a1_hiring').value = Math.round(defaultValues.a1_hiring * mult);
+  document.getElementById('a2_hiring').value = Math.round(defaultValues.a2_hiring * mult);
+
+  // Slight variation on AHT based on channel
+  const ahtMult = channel === 'Chat' ? 0.7 : channel === 'Email' ? 1.4 : channel === 'Social Media' ? 0.8 : 1;
+  document.getElementById('a1_aht').value = Math.round(defaultValues.a1_aht * ahtMult);
+  document.getElementById('a2_aht').value = Math.round(defaultValues.a2_aht * ahtMult);
+}
+
+function resetFilters(){
+  ['filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  document.getElementById('filter_subregion').innerHTML='<option value="">All Sub Regions</option>';
+  document.getElementById('filter_country').innerHTML='<option value="">All Countries</option>';
+  updateActiveFilterTags();
+
+  // Reset values to defaults
+  Object.entries(defaultValues).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+  document.getElementById('a1_fcmod').value=5;document.getElementById('a1_fcmod_v').textContent='5%';
+  document.getElementById('a2_fcmod').value=-3;document.getElementById('a2_fcmod_v').textContent='-3%';
+  document.getElementById('a1_conc').textContent='2';document.getElementById('a2_conc').textContent='2';
+  for(let i=0;i<10;i++){document.getElementById('a1_aux'+i).value=auxA1Def[i];document.getElementById('a2_aux'+i).value=auxA2Def[i];}
+
+  recalculate();
+  showToast('✕ All filters cleared — Dashboard reset');
+}
+
+/* ============ THEME ============ */
+function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);updateThemeIcon();recalculate();showToast(n==='dark'?'🌙 Dark mode':'☀ Light mode');}
+function updateThemeIcon(){document.getElementById('themeToggle').textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀':'🌙';}
+
+/* ============ TABS ============ */
+function switchTab(id,btn){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');if(id==='export')buildExportTab();}
+function toggleAccordion(h){h.classList.toggle('collapsed');h.nextElementSibling.classList.toggle('collapsed');}
+
+function buildAuxRows(){
+  const c=document.getElementById('aux-container');let html='<div class="param-table">';
+  for(let i=0;i<10;i++){html+=`<div class="param-row sub-row"><span class="param-label">${auxLabels[i]}</span><input class="editable-input" type="number" step="0.1" id="a1_aux${i}" value="${auxA1Def[i]}" oninput="recalculate()"><input class="editable-input" type="number" step="0.1" id="a2_aux${i}" value="${auxA2Def[i]}" oninput="recalculate()"><span class="delta-val" id="delta_aux${i}"></span></div>`;}
+  html+='</div>';c.innerHTML=html;
+}
+
+function stepVal(id,dir){const el=document.getElementById(id);let v=parseInt(el.textContent)+dir;if(v<1)v=1;el.textContent=v;recalculate();}
+function getVal(id){return parseFloat(document.getElementById(id).value)||0;}
+function getStep(id){return parseInt(document.getElementById(id).textContent)||1;}
+function fmt(n){return n.toLocaleString('en-US',{maximumFractionDigits:0});}
+function fmtD(n){return(n>=0?'+':'')+n.toLocaleString('en-US',{maximumFractionDigits:1});}
+function deltaClass(v){return v>0.001?'delta-pos':v<-0.001?'delta-neg':'delta-zero';}
+function setDelta(id,val,suffix){const el=document.getElementById(id);el.textContent=fmtD(val)+(suffix||'');el.className='delta-val '+deltaClass(val);}
+function cc(){const d=document.documentElement.getAttribute('data-theme')==='dark';return{grid:d?'rgba(30,58,95,0.4)':'rgba(0,0,0,0.06)',text:d?'#94a3b8':'#64748b',green:'#22c55e',red:'#ef4444',blue:'#3b82f6',teal:'#06b6d4'};}
+
+/* ============ RECALCULATE ============ */
+function recalculate(){
+  const a1={forecast:getVal('a1_forecast'),fcmod:parseFloat(document.getElementById('a1_fcmod').value),ar:getVal('a1_ar'),handled:getVal('a1_handled'),aht:getVal('a1_aht'),absent:getVal('a1_absent'),avail:getVal('a1_avail'),staffed:getVal('a1_staffed'),conc:getStep('a1_conc'),hc:getVal('a1_hc'),attrition:getVal('a1_attrition'),movin:getVal('a1_movin'),movout:getVal('a1_movout'),hiring:getVal('a1_hiring'),training:getVal('a1_training'),ojt:getVal('a1_ojt'),db:getVal('a1_db'),aux:[]};
+  const a2={forecast:getVal('a2_forecast'),fcmod:parseFloat(document.getElementById('a2_fcmod').value),ar:getVal('a2_ar'),handled:getVal('a2_handled'),aht:getVal('a2_aht'),absent:getVal('a2_absent'),avail:getVal('a2_avail'),staffed:getVal('a2_staffed'),conc:getStep('a2_conc'),hc:getVal('a2_hc'),attrition:getVal('a2_attrition'),movin:getVal('a2_movin'),movout:getVal('a2_movout'),hiring:getVal('a2_hiring'),training:getVal('a2_training'),ojt:getVal('a2_ojt'),db:getVal('a2_db'),aux:[]};
+  for(let i=0;i<10;i++){a1.aux.push(getVal('a1_aux'+i));a2.aux.push(getVal('a2_aux'+i));}
+  a1.totalAux=a1.aux.reduce((s,v)=>s+v,0);a2.totalAux=a2.aux.reduce((s,v)=>s+v,0);
+  function calc(s){s.osp=100-s.db;s.reqHC=Math.round(s.handled*s.aht/(s.staffed*3600*(s.avail/100)*(1-s.absent/100)*s.conc));s.occupancy=(s.handled*s.aht/(s.hc*s.staffed*3600*(s.avail/100)*(1-s.absent/100)))*100;s.utilization=(1-s.totalAux/100)*s.avail;s.productivity=s.hc>0?s.handled/s.hc:0;}
+  calc(a1);calc(a2);
+  setDelta('delta_forecast',a2.forecast-a1.forecast);setDelta('delta_fcmod',a2.fcmod-a1.fcmod,' pp');
+  const od=a2.db-a1.db;document.getElementById('delta_osp').textContent=(od>=0?'+':'')+od+'pp';document.getElementById('delta_osp').className='delta-val '+deltaClass(od);
+  setDelta('delta_ar',a2.ar-a1.ar,' pp');setDelta('delta_handled',a2.handled-a1.handled);setDelta('delta_aht',a2.aht-a1.aht);setDelta('delta_absent',a2.absent-a1.absent,' pp');
+  for(let i=0;i<10;i++)setDelta('delta_aux'+i,a2.aux[i]-a1.aux[i],' pp');
+  setDelta('delta_avail',a2.avail-a1.avail,' pp');setDelta('delta_staffed',a2.staffed-a1.staffed);setDelta('delta_conc',a2.conc-a1.conc);setDelta('delta_hc',a2.hc-a1.hc);setDelta('delta_attrition',a2.attrition-a1.attrition,' pp');setDelta('delta_movin',a2.movin-a1.movin);setDelta('delta_movout',a2.movout-a1.movout);setDelta('delta_hiring',a2.hiring-a1.hiring);setDelta('delta_training',a2.training-a1.training);setDelta('delta_ojt',a2.ojt-a1.ojt);
+  renderKPIs(a1,a2);renderWaterfallChart(a1,a2);renderTornadoChart(a1,a2);renderForecastChart(a1,a2);renderAuxChart(a1,a2);renderTrainingChart(a1,a2);renderDriverRanking(a1,a2);renderImpactSummary(a1,a2);
+}
+
+/* ============ KPI ============ */
+function renderKPIs(a1,a2){
+  const kpis=[
+    {title:'Forecast (Handled)',v1:fmt(a1.handled),v2:fmt(a2.handled),delta:a2.handled-a1.handled,pct:((a2.handled-a1.handled)/a1.handled*100)},
+    {title:'Required Headcount',v1:fmt(a1.reqHC),v2:fmt(a2.reqHC),delta:a2.reqHC-a1.reqHC,pct:((a2.reqHC-a1.reqHC)/a1.reqHC*100)},
+    {title:'SLA (AR%)',v1:a1.ar.toFixed(1)+'%',v2:a2.ar.toFixed(1)+'%',delta:a2.ar-a1.ar,pct:null,suffix:' pp'},
+    {title:'Occupancy',v1:a1.occupancy.toFixed(1)+'%',v2:a2.occupancy.toFixed(1)+'%',delta:a2.occupancy-a1.occupancy,pct:null,suffix:' pp'},
+    {title:'Utilization',v1:a1.utilization.toFixed(1)+'%',v2:a2.utilization.toFixed(1)+'%',delta:a2.utilization-a1.utilization,pct:null,suffix:' pp'},
+    {title:'Productivity (C/HC)',v1:a1.productivity.toFixed(1),v2:a2.productivity.toFixed(1),delta:a2.productivity-a1.productivity,pct:((a2.productivity-a1.productivity)/a1.productivity*100)},
+  ];
+  document.getElementById('kpi-row').innerHTML=kpis.map(k=>{
+    const cls=k.delta>=0?'pos':'neg';const sign=k.delta>=0?'+':'';
+    return`<div class="kpi-card"><div class="kpi-title">${k.title}</div><div class="kpi-values"><div class="kpi-val">${k.v1}<small>A1</small></div><div class="kpi-val">${k.v2}<small>A2</small></div></div><span class="kpi-delta ${cls}">${k.delta>=0?'▲':'▼'} ${sign}${k.delta.toFixed(1)}${k.suffix||''}${k.pct!==null?' ('+sign+k.pct.toFixed(2)+'%)':''}</span></div>`;
+  }).join('');
+}
+
+/* ============ DRIVERS ============ */
+function computeDrivers(a1,a2){
+  const hcDiff=a2.hc-a1.hc;
+  const fi=Math.round((a2.forecast-a1.forecast)/Math.max(a1.forecast,1)*a1.hc*-0.5)||Math.round(hcDiff*0.4);
+  const ai=Math.round((a2.aht-a1.aht)/Math.max(a1.aht,1)*a1.hc*-1)||Math.round(hcDiff*0.15);
+  const abi=Math.round((a2.absent-a1.absent)/100*a1.hc*-1)||Math.round(hcDiff*0.06);
+  const ati=Math.round((a2.attrition-a1.attrition)/100*a1.hc)||Math.round(hcDiff*0.08);
+  const ci=Math.round((a2.conc-a1.conc)*a1.hc*0.05);
+  const aui=Math.round((a2.totalAux-a1.totalAux)/100*a1.hc*0.3);
+  const avi=Math.round((a2.avail-a1.avail)/100*a1.hc*-0.5);
+  const hi=a2.hiring-a1.hiring;const mi=(a2.movin-a1.movin)-(a2.movout-a1.movout);
+  const sum=fi+ai+abi+ati+ci+aui+avi+hi+mi;
+  return[{name:'Forecast',impact:fi||20},{name:'AHT',impact:ai||7},{name:'Absenteeism',impact:abi||3},{name:'Attrition',impact:ati||-4},{name:'Concurrency',impact:ci},{name:'Aux States',impact:aui||2},{name:'Availability',impact:avi||-2},{name:'Hiring',impact:hi},{name:'Movement',impact:mi},{name:'Other',impact:(hcDiff-sum)||-2}].sort((a,b)=>Math.abs(b.impact)-Math.abs(a.impact));
+}
+
+/* ============ CHARTS ============ */
+function renderWaterfallChart(a1,a2){
+  const ctx=document.getElementById('waterfallChart').getContext('2d');if(waterfallChartInst)waterfallChartInst.destroy();const c=cc();
+  const drivers=computeDrivers(a1,a2);const labels=['A1 HC',...drivers.map(d=>d.name),'A2 HC'];
+  const base=[0],inc=[a1.hc],dec=[0],total=[0];let rt=a1.hc;
+  drivers.forEach(d=>{if(d.impact>=0){base.push(rt);inc.push(d.impact);dec.push(0);total.push(0);}else{base.push(rt+d.impact);inc.push(0);dec.push(Math.abs(d.impact));total.push(0);}rt+=d.impact;});
+  base.push(0);inc.push(0);dec.push(0);total.push(a2.hc);
+  waterfallChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'Base',data:base,backgroundColor:'transparent',borderWidth:0,datalabels:{display:false}},
+    {label:'Increase',data:inc,backgroundColor:c.green,datalabels:{display:ctx=>ctx.raw>0,color:c.green,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>'+'+v}},
+    {label:'Decrease',data:dec,backgroundColor:c.red,datalabels:{display:ctx=>ctx.raw>0,color:c.red,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>'-'+v}},
+    {label:'Total',data:total,backgroundColor:c.blue,datalabels:{display:ctx=>ctx.raw>0,color:c.blue,anchor:'end',align:'top',font:{size:10,weight:'bold'}}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{filter:i=>i.text!=='Base',color:c.text,font:{size:9}}},datalabels:{}},scales:{x:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:8}}},y:{stacked:true,grid:{color:c.grid},ticks:{color:c.text,font:{size:9}},min:Math.min(a1.hc,a2.hc)-150}}}});
+}
+
+function renderTornadoChart(a1,a2){
+  const ctx=document.getElementById('tornadoChart').getContext('2d');if(tornadoChartInst)tornadoChartInst.destroy();const c=cc();
+  const drivers=computeDrivers(a1,a2);
+  tornadoChartInst=new Chart(ctx,{type:'bar',data:{labels:drivers.map(d=>d.name),datasets:[{data:drivers.map(d=>d.impact),backgroundColor:drivers.map(d=>d.impact>=0?c.teal:c.red),borderRadius:3,barThickness:16,datalabels:{color:ctx=>ctx.raw>=0?c.teal:c.red,anchor:ctx=>ctx.raw>=0?'end':'start',align:ctx=>ctx.raw>=0?'right':'left',font:{size:9,weight:'bold'},formatter:v=>(v>=0?'+':'')+v}}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{grid:{display:false},ticks:{color:c.text,font:{size:9}}}}}});
+}
+
+function renderForecastChart(a1,a2){
+  const ctx=document.getElementById('forecastChart').getContext('2d');if(forecastChartInst)forecastChartInst.destroy();const c=cc();
+  const weeks=['W1','W5','W9','W13','W17','W21','W26'];
+  const a1D=weeks.map((_,i)=>Math.round(a1.handled*(0.12+i*0.14)));
+  const a2D=weeks.map((_,i)=>Math.round(a2.handled*(0.11+i*0.14)));
+  const actD=weeks.map((_,i)=>Math.round(a1.handled*0.95*(0.12+i*0.14)));
+  forecastChartInst=new Chart(ctx,{type:'line',data:{labels:weeks,datasets:[
+    {label:'A1 (Baseline)',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,datalabels:{display:false}},
+    {label:'A2 (Optimistic)',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,datalabels:{display:false}},
+    {label:'Actual',data:actD,borderColor:c.text,backgroundColor:'transparent',tension:0.4,borderWidth:1,borderDash:[3,3],pointRadius:2,datalabels:{display:false}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}}}}});
+}
+
+function renderAuxChart(a1,a2){
+  const ctx=document.getElementById('auxChart').getContext('2d');if(auxChartInst)auxChartInst.destroy();const c=cc();
+  const colors=['#06b6d4','#3b82f6','#8b5cf6','#ec4899','#f59e0b','#22c55e','#64748b','#ef4444','#14b8a6','#f97316'];
+  const datasets=auxLabels.map((l,i)=>({label:l,data:[getVal('a1_aux'+i),getVal('a2_aux'+i)],backgroundColor:colors[i],datalabels:{display:ctx=>ctx.raw>=3,color:'#fff',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}}));
+  auxChartInst=new Chart(ctx,{type:'bar',data:{labels:['A1 (Baseline)','A2 (Optimistic)'],datasets},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{}},scales:{x:{stacked:true,max:100,grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}},y:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:10}}}}}});
+}
+
+function renderTrainingChart(a1,a2){
+  const ctx=document.getElementById('trainingChart').getContext('2d');if(trainingChartInst)trainingChartInst.destroy();const c=cc();
+  const weeks=['Week 1','Week 2','Week 3','Week 4','Week 5','Week 6'];
+  const t1=getVal('a1_training')||6,t2=getVal('a2_training')||6;
+  const a1D=weeks.map((_,i)=>Math.min(100,Math.round(20+(65/(Math.max(t1,2)-1))*i+(i>3?5:0))));
+  const a2D=weeks.map((_,i)=>Math.min(100,Math.round(25+(65/(Math.max(t2,2)-1))*i+(i>3?5:0))));
+  trainingChartInst=new Chart(ctx,{type:'line',data:{labels:weeks,datasets:[
+    {label:'A1 (Baseline)',data:a1D,borderColor:c.blue,backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,borderWidth:2,pointRadius:5,pointBackgroundColor:c.blue,datalabels:{display:true,color:c.blue,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
+    {label:'A2 (Optimistic)',data:a2D,borderColor:c.teal,backgroundColor:'rgba(6,182,212,0.1)',fill:true,tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:5,pointBackgroundColor:c.teal,datalabels:{display:true,color:c.teal,anchor:'end',align:'bottom',offset:4,font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{min:0,max:110,grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
+}
+
+/* ============ TABLES ============ */
+function renderDriverRanking(a1,a2){
+  const drivers=computeDrivers(a1,a2);const tot=drivers.reduce((s,d)=>s+Math.abs(d.impact),0)||1;
+  document.querySelector('#driverRankingTable tbody').innerHTML=drivers.map((d,i)=>{
+    const pct=((d.impact/tot)*100).toFixed(0);const color=d.impact>=0?'var(--teal)':'var(--red)';const barW=Math.min(80,Math.abs(d.impact)/(Math.abs(drivers[0].impact)||1)*80);
+    return`<tr><td>${i+1}</td><td>${d.name}</td><td><span class="impact-bar" style="background:${color};width:${barW}px"></span>${d.impact>=0?'+':''}${d.impact}</td><td style="color:${color}">${d.impact>=0?'+':''}${pct}%</td></tr>`;
+  }).join('');
+}
+
+function renderImpactSummary(a1,a2){
+  const rows=[
+    {m:'Forecast (Handled)',v1:fmt(a1.handled),v2:fmt(a2.handled),d:a2.handled-a1.handled,p:(a2.handled-a1.handled)/a1.handled*100,s:''},
+    {m:'Required Headcount',v1:fmt(a1.reqHC),v2:fmt(a2.reqHC),d:a2.reqHC-a1.reqHC,p:(a2.reqHC-a1.reqHC)/a1.reqHC*100,s:''},
+    {m:'SLA (AR%)',v1:a1.ar.toFixed(1)+'%',v2:a2.ar.toFixed(1)+'%',d:a2.ar-a1.ar,p:(a2.ar-a1.ar)/a1.ar*100,s:' pp'},
+    {m:'Occupancy',v1:a1.occupancy.toFixed(1)+'%',v2:a2.occupancy.toFixed(1)+'%',d:a2.occupancy-a1.occupancy,p:(a2.occupancy-a1.occupancy)/a1.occupancy*100,s:' pp'},
+    {m:'Utilization',v1:a1.utilization.toFixed(1)+'%',v2:a2.utilization.toFixed(1)+'%',d:a2.utilization-a1.utilization,p:(a2.utilization-a1.utilization)/a1.utilization*100,s:' pp'},
+    {m:'Productivity (C/HC)',v1:a1.productivity.toFixed(1),v2:a2.productivity.toFixed(1),d:a2.productivity-a1.productivity,p:(a2.productivity-a1.productivity)/a1.productivity*100,s:''},
+  ];
+  document.querySelector('#impactSummaryTable tbody').innerHTML=rows.map(r=>{
+    const color=r.d>=0?'var(--green)':'var(--red)';
+    return`<tr><td>${r.m}</td><td>${r.v1}</td><td>${r.v2}</td><td style="color:${color};font-weight:600">${r.d>=0?'+':''}${r.d.toFixed(1)}${r.s}</td><td style="color:${color};font-weight:600">${r.p>=0?'+':''}${r.p.toFixed(2)}%</td></tr>`;
+  }).join('');
+}
+
+/* ============ AUDIT TRAIL ============ */
+function renderAuditTrail(){document.getElementById('auditBody').innerHTML=auditEntries.slice(0,10).map(e=>`<tr><td>${e.time}</td><td>${e.user}</td><td>${e.param}</td><td>${e.from}</td><td>${e.to}</td></tr>`).join('');}
+
+/* ============ NOTES ============ */
+function saveNote(){
+  const text=document.getElementById('notesArea').value.trim();
+  if(!text){showToast('⚠ Please enter a note');return;}
+  const now=new Date();const options={year:'numeric',month:'long',day:'numeric',hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true};
+  savedNotes.unshift({text,date:now.toLocaleDateString('en-US',options),user:'Siddharth J.'});
+  renderNotesHistory();document.getElementById('notesArea').value='';showToast('✅ Note saved successfully');
+}
+function renderNotesHistory(){
+  const tbody=document.getElementById('notesHistoryBody');
+  if(savedNotes.length===0){tbody.innerHTML='<tr><td colspan="3" class="no-notes">No notes saved yet.</td></tr>';return;}
+  tbody.innerHTML=savedNotes.map(n=>`<tr><td>${n.text}</td><td>${n.date}</td><td>${n.user}</td></tr>`).join('');
+}
+
+/* ============ EXPORT ============ */
+function buildExportTab(){
+  document.getElementById('exportSummaryGrid').innerHTML=[
+    {l:'Forecast (Handled)',v1:fmt(getVal('a1_handled')),v2:fmt(getVal('a2_handled'))},{l:'Headcount',v1:fmt(getVal('a1_hc')),v2:fmt(getVal('a2_hc'))},{l:'SLA (AR%)',v1:getVal('a1_ar').toFixed(1)+'%',v2:getVal('a2_ar').toFixed(1)+'%'},{l:'AHT (sec)',v1:getVal('a1_aht'),v2:getVal('a2_aht')},{l:'Absenteeism',v1:getVal('a1_absent')+'%',v2:getVal('a2_absent')+'%'},{l:'Availability',v1:getVal('a1_avail')+'%',v2:getVal('a2_avail')+'%'},
+  ].map(s=>`<div class="summary-stat"><div class="label">${s.l}</div><div class="val">${s.v1}</div><div class="sub">A2: ${s.v2}</div></div>`).join('');
+  const params=[['1','Forecast',getVal('a1_forecast'),getVal('a2_forecast')],['2','Forecast Modifier',document.getElementById('a1_fcmod').value+'%',document.getElementById('a2_fcmod').value+'%'],['3','DB Mix',getVal('a1_db')+'%',getVal('a2_db')+'%'],['4','AR%',getVal('a1_ar')+'%',getVal('a2_ar')+'%'],['5','Handled',getVal('a1_handled'),getVal('a2_handled')],['6','AHT (sec)',getVal('a1_aht'),getVal('a2_aht')],['7','Absenteeism %',getVal('a1_absent')+'%',getVal('a2_absent')+'%'],['8','Availability %',getVal('a1_avail')+'%',getVal('a2_avail')+'%'],['9','Staffed Time',getVal('a1_staffed'),getVal('a2_staffed')],['10','Concurrency',getStep('a1_conc'),getStep('a2_conc')],['11','Actual HC',getVal('a1_hc'),getVal('a2_hc')],['12','Attrition %',getVal('a1_attrition')+'%',getVal('a2_attrition')+'%'],['13','Movement In',getVal('a1_movin'),getVal('a2_movin')],['14','Movement Out',getVal('a1_movout'),getVal('a2_movout')],['15','Hiring',getVal('a1_hiring'),getVal('a2_hiring')],['16','Training (Wks)',getVal('a1_training'),getVal('a2_training')],['17','OJT/Nesting (Wks)',getVal('a1_ojt'),getVal('a2_ojt')]];
+  document.querySelector('#exportTable tbody').innerHTML=params.map(p=>{const v1=parseFloat(String(p[2]).replace('%',''));const v2=parseFloat(String(p[3]).replace('%',''));const d=v2-v1;const color=d>0?'var(--green)':d<0?'var(--red)':'var(--text-muted)';return`<tr><td>${p[0]}</td><td>${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td><td style="color:${color};font-weight:600">${d>=0?'+':''}${d.toFixed(1)}</td></tr>`;}).join('');
+}
+function exportCSV(){
+  const rows=[['#','Parameter','A1 (Baseline)','A2 (Optimistic)','Delta']];
+  document.querySelectorAll('#exportTable tbody tr').forEach(tr=>{rows.push([...tr.querySelectorAll('td')].map(td=>td.textContent));});
+  const csv=rows.map(r=>r.join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='scenario_export.csv';a.click();URL.revokeObjectURL(url);showToast('📥 CSV downloaded');
+}
+
+function resetAll(){
+  resetFilters();
+}
+
+function showToast(msg){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.textContent=msg;c.appendChild(t);setTimeout(()=>{if(t.parentNode)t.parentNode.removeChild(t);},3000);}
+</script>
+</body>
+</html>
