@@ -179,9 +179,6 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .weekly-table .wk-chevron{display:inline-block;width:10px;font-size:8px;}
 .weekly-table tbody tr:hover td{background:var(--bg-hover);}
 .weekly-table tbody tr:hover td.wk-param{background:var(--bg-hover);}
-.wk-input{width:52px;padding:2px 3px;background:transparent;border:1px solid transparent;border-radius:3px;color:var(--text-primary);font-size:10px;font-family:var(--font);text-align:center;outline:none;}
-.wk-input:hover{border-color:var(--border);background:var(--bg-input);}
-.wk-input:focus{border-color:var(--accent);background:var(--bg-input);box-shadow:0 0 0 1px var(--accent-glow);}
 
 /* RIGHT PANEL */
 .right-panel{width:310px;min-width:310px;background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;transition:background var(--transition),border var(--transition);}
@@ -266,6 +263,46 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 <!-- ===== FILTER BAR ===== -->
 <div class="filter-bar" id="filterBar">
   <div class="filter-label">🔍 Filters</div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <label>Fiscal Year</label>
+    <select id="filter_fiscalyear">
+      <option value="">All Fiscal Years</option>
+      <option>FY24</option>
+      <option>FY25</option>
+      <option>FY26</option>
+      <option>FY27</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Fiscal Quarter</label>
+    <select id="filter_fiscalquarter">
+      <option value="">All Quarters</option>
+      <option>Q1</option>
+      <option>Q2</option>
+      <option>Q3</option>
+      <option>Q4</option>
+    </select>
+  </div>
+  <div class="filter-group" id="filterFiscalWeekGroup">
+    <label>Fiscal Week</label>
+    <select id="filter_fiscalweek">
+      <option value="">All Weeks</option>
+      <option>Week 1</option>
+      <option>Week 2</option>
+      <option>Week 3</option>
+      <option>Week 4</option>
+      <option>Week 5</option>
+      <option>Week 6</option>
+      <option>Week 7</option>
+      <option>Week 8</option>
+      <option>Week 9</option>
+      <option>Week 10</option>
+      <option>Week 11</option>
+      <option>Week 12</option>
+      <option>Week 13</option>
+    </select>
+  </div>
   <div class="filter-sep"></div>
   <div class="filter-group">
     <label>Region</label>
@@ -531,6 +568,9 @@ function onFilterChange(source){
   showToast(`🔍 Filters applied (${activeCount} active) — Dashboard recalculated`);
 }
 
+document.getElementById('filter_fiscalyear').onchange = ()=> onFilterChange('fiscalyear');
+document.getElementById('filter_fiscalquarter').onchange = ()=> onFilterChange('fiscalquarter');
+document.getElementById('filter_fiscalweek').onchange = ()=> onFilterChange('fiscalweek');
 document.getElementById('filter_region').onchange = ()=> onFilterChange('region');
 document.getElementById('filter_subregion').onchange = ()=> onFilterChange('subregion');
 document.getElementById('filter_country').onchange = ()=> onFilterChange('country');
@@ -540,7 +580,7 @@ document.getElementById('filter_queue').onchange = ()=> onFilterChange('queue');
 
 function getActiveFilterCount(){
   let c=0;
-  ['filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
+  ['filter_fiscalyear','filter_fiscalquarter','filter_fiscalweek','filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
     if(document.getElementById(id).value) c++;
   });
   return c;
@@ -549,6 +589,9 @@ function getActiveFilterCount(){
 function updateActiveFilterTags(){
   const container = document.getElementById('activeFilterTags');
   const filters = [
+    {id:'filter_fiscalyear',label:'Fiscal Year'},
+    {id:'filter_fiscalquarter',label:'Fiscal Quarter'},
+    {id:'filter_fiscalweek',label:'Fiscal Week'},
     {id:'filter_region',label:'Region'},
     {id:'filter_subregion',label:'Sub Region'},
     {id:'filter_country',label:'Country'},
@@ -585,7 +628,7 @@ function applyFilterMultipliers(){
 }
 
 function resetFilters(){
-  ['filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
+  ['filter_fiscalyear','filter_fiscalquarter','filter_fiscalweek','filter_region','filter_subregion','filter_country','filter_channel','filter_offering','filter_queue'].forEach(id=>{
     document.getElementById(id).value='';
   });
   document.getElementById('filter_subregion').innerHTML='<option value="">All Sub Regions</option>';
@@ -617,6 +660,14 @@ function setViewMode(mode){
   document.getElementById('forecastChartTitle').textContent = mode==='quarterly' ? 'FORECAST COMPARISON (Quarterly)' : 'FORECAST COMPARISON (Weekly)';
   document.getElementById('auxChartTitle').textContent = mode==='quarterly' ? 'AUX STATES TREND (Quarterly)' : 'AUX STATES TREND (Weekly)';
   document.getElementById('trainingChartTitle').textContent = mode==='quarterly' ? 'TRAINING RAMP (Quarterly)' : 'TRAINING RAMP (Weekly)';
+  const fiscalWeekGroup=document.getElementById('filterFiscalWeekGroup');
+  if(mode==='quarterly'){
+    fiscalWeekGroup.style.display='none';
+    document.getElementById('filter_fiscalweek').value='';
+  } else {
+    fiscalWeekGroup.style.display='';
+  }
+  updateActiveFilterTags();
   recalculate();
 }
 function getPeriods(){
@@ -699,13 +750,6 @@ function toggleGroup(group){
   renderWeeklyTable();
 }
 
-function onWeeklyInput(el){
-  const key=el.dataset.key, side=el.dataset.side, wk=+el.dataset.week;
-  const v=parseFloat(el.value);
-  weeklyData[key][side][wk]=isNaN(v)?0:v;
-  refreshOutputs();
-}
-
 function renderWeeklyTable(){
   const periods=getPeriods();
   let wh='<th class="wk-param-head">Parameters</th>', ah='<th></th>';
@@ -727,10 +771,6 @@ function renderWeeklyTable(){
         if(r.derived){
           const val=aggVals(derived[r.key][side],p.idx,r.agg,r.dec);
           cells+=`<td id="wkd_${r.key}_${side}_${pi}">${val}${r.suffix||''}</td>`;
-        } else if(viewMode==='weekly'&&!r.readonly){
-          const wi=p.idx[0];
-          const val=weeklyData[r.key][side][wi];
-          cells+=`<td><input class="wk-input" data-key="${r.key}" data-side="${side}" data-week="${wi}" type="number" step="${r.step||1}" value="${val}" oninput="onWeeklyInput(this)"></td>`;
         } else {
           const val=aggVals(weeklyData[r.key][side],p.idx,r.agg,r.dec);
           cells+=`<td>${val}${r.suffix||''}</td>`;
