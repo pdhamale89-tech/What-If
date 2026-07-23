@@ -393,7 +393,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       </div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-row three">
-        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon, with AR% and Forecast Mod % trends on the right axis.<ul><li><b>Blue bar</b> = A1 Baseline volume</li><li><b>Teal bar</b> = A2 Optimistic volume</li><li><b>Amber line</b> = A1 AR%</li><li><b>Dashed orange line</b> = A2 AR%</li><li><b>Purple line</b> = A1 Forecast Mod %</li><li><b>Dashed pink line</b> = A2 Forecast Mod %</li></ul></div></div></div><canvas id="forecastChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon, with a trend line on the right axis.<ul><li><b>Blue bar</b> = A1 Baseline volume</li><li><b>Teal bar</b> = A2 Optimistic volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div></div><canvas id="forecastChart"></canvas></div>
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="auxChartTitle">AUX STATES TREND (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Total auxiliary (non-productive) time as a % of staffed time, per period.<ul><li>Compares A1 vs A2</li><li>Lower is generally better for productivity</li></ul></div></div></div><canvas id="auxChart"></canvas></div>
         <div class="chart-card"><div class="chart-card-header"><h3 id="trainingChartTitle">TRAINING RAMP (Weekly)</h3><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>New hire proficiency curve over the horizon. Steeper = faster ramp to production.</div></div></div><canvas id="trainingChart"></canvas></div>
       </div>
@@ -753,7 +753,7 @@ function toggleGroup(group){
 function renderWeeklyTable(){
   const periods=getPeriods();
   let wh='<th class="wk-param-head">Parameters</th>', ah='<th></th>';
-  periods.forEach(p=>{wh+=`<th colspan="2">${p.label}</th>`;ah+='<th>A1</th><th>A2</th>';});
+  periods.forEach(p=>{wh+=`<th colspan="2">${p.label}</th>`;ah+='<th>Scenario A1</th><th>Scenario A2</th>';});
   document.getElementById('weeklyHeaderWeeks').innerHTML=wh;
   document.getElementById('weeklyHeaderAA').innerHTML=ah;
 
@@ -824,28 +824,47 @@ function renderKPIs(derived){
 }
 
 /* ============ CHARTS ============ */
+let forecastMetric='ar';
+function setForecastMetric(metric){
+  forecastMetric=metric;
+  document.querySelectorAll('#forecastMetricToggle .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.metric===metric));
+  renderForecastChart();
+}
+
 function renderForecastChart(){
   const ctx=document.getElementById('forecastChart').getContext('2d');if(forecastChartInst)forecastChartInst.destroy();const c=cc();
   const periods=getPeriods();
   const labels=periods.map(p=>p.label);
   const a1D=periods.map(p=>aggVals(weeklyData.handled.a1,p.idx,'sum',0));
   const a2D=periods.map(p=>aggVals(weeklyData.handled.a2,p.idx,'sum',0));
-  const ar1D=periods.map(p=>aggVals(weeklyData.ar.a1,p.idx,'avg',1));
-  const ar2D=periods.map(p=>aggVals(weeklyData.ar.a2,p.idx,'avg',1));
-  const fcmod1D=periods.map(p=>aggVals(weeklyData.fcmod.a1,p.idx,'avg',1));
-  const fcmod2D=periods.map(p=>aggVals(weeklyData.fcmod.a2,p.idx,'avg',1));
+
+  let metricDatasets, metricMin, metricMax;
+  if(forecastMetric==='fcmod'){
+    const fcmod1D=periods.map(p=>aggVals(weeklyData.fcmod.a1,p.idx,'avg',1));
+    const fcmod2D=periods.map(p=>aggVals(weeklyData.fcmod.a2,p.idx,'avg',1));
+    metricDatasets=[
+      {type:'line',label:'A1 Forecast Mod %',data:fcmod1D,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+      {type:'line',label:'A2 Forecast Mod %',data:fcmod2D,borderColor:c.pink,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.pink,order:1,datalabels:{display:true,color:c.pink,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    ];
+    metricMin=-20; metricMax=20;
+  } else {
+    const ar1D=periods.map(p=>aggVals(weeklyData.ar.a1,p.idx,'avg',1));
+    const ar2D=periods.map(p=>aggVals(weeklyData.ar.a2,p.idx,'avg',1));
+    metricDatasets=[
+      {type:'line',label:'A1 AR%',data:ar1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+      {type:'line',label:'A2 AR%',data:ar2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    ];
+    metricMin=0; metricMax=100;
+  }
+
   forecastChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {type:'bar',label:'A1 (Baseline)',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:3,datalabels:{display:false}},
-    {type:'bar',label:'A2 (Optimistic)',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:3,datalabels:{display:false}},
-    {type:'line',label:'A1 AR%',data:ar1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:2,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {type:'line',label:'A2 AR%',data:ar2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:2,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {type:'line',label:'A1 Forecast Mod %',data:fcmod1D,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {type:'line',label:'A2 Forecast Mod %',data:fcmod2D,borderColor:c.pink,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.pink,order:1,datalabels:{display:true,color:c.pink,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {type:'bar',label:'A1 (Baseline)',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'bar',label:'A2 (Optimistic)',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:false}},
+    ...metricDatasets,
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
-    x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},
-    y:{position:'left',grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
-    y1:{position:'right',min:0,max:100,grid:{drawOnChartArea:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}},
-    y2:{position:'right',display:false,min:-20,max:20}
+    x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
+    y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
+    y1:{position:'right',min:metricMin,max:metricMax,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
   }}});
 }
 
@@ -858,7 +877,7 @@ function renderAuxChart(derived){
   auxChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'A1 (Baseline)',data:a1D,borderColor:c.blue,backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,datalabels:{display:false}},
     {label:'A2 (Optimistic)',data:a2D,borderColor:c.teal,backgroundColor:'rgba(6,182,212,0.1)',fill:true,tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,datalabels:{display:false}},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},y:{grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
 }
 
 function renderTrainingChart(){
@@ -875,7 +894,7 @@ function renderTrainingChart(){
   trainingChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'A1 (Baseline)',data:a1D,borderColor:c.blue,backgroundColor:'rgba(59,130,246,0.1)',fill:true,tension:0.4,borderWidth:2,pointRadius:5,pointBackgroundColor:c.blue,datalabels:{display:true,color:c.blue,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
     {label:'A2 (Optimistic)',data:a2D,borderColor:c.teal,backgroundColor:'rgba(6,182,212,0.1)',fill:true,tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:5,pointBackgroundColor:c.teal,datalabels:{display:true,color:c.teal,anchor:'end',align:'bottom',offset:4,font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{}},scales:{x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},y:{min:0,max:110,grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{}},scales:{x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},y:{min:0,max:110,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}}}});
 }
 
 /* ============ AI-GENERATED INSIGHTS ============ */
