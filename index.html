@@ -213,6 +213,19 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .data-table tr:hover td{background:var(--bg-hover);}
 .impact-bar{display:inline-block;height:8px;border-radius:4px;min-width:4px;vertical-align:middle;margin-right:6px;}
 
+/* WEEKLY TABLE */
+.weekly-table-wrap{overflow-x:auto;max-height:340px;overflow-y:auto;}
+.weekly-table{border-collapse:collapse;font-size:10px;white-space:nowrap;}
+.weekly-table th,.weekly-table td{padding:4px 8px;border:1px solid var(--border-light);text-align:center;}
+.weekly-table thead tr:first-child th{background:var(--bg-section-header);color:var(--accent);font-weight:700;position:sticky;top:0;z-index:3;}
+.weekly-table thead tr:nth-child(2) th{background:var(--bg-filter);color:var(--text-secondary);font-weight:600;position:sticky;top:24px;z-index:3;}
+.weekly-table thead th.wk-param-head{left:0;z-index:4;text-align:left;}
+.weekly-table td.wk-param{position:sticky;left:0;background:var(--bg-card);text-align:left;font-weight:500;color:var(--text-primary);z-index:2;border-right:1px solid var(--border);}
+.weekly-table tr.wk-section-row td{background:var(--bg-card);color:var(--accent);font-weight:700;text-transform:uppercase;font-size:9px;letter-spacing:0.5px;}
+.weekly-table tr.wk-section-row td.wk-param{background:var(--bg-card);}
+.weekly-table tbody tr:hover td{background:var(--bg-hover);}
+.weekly-table tbody tr:hover td.wk-param{background:var(--bg-hover);}
+
 /* RIGHT PANEL */
 .right-panel{width:310px;min-width:310px;background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;transition:background var(--transition),border var(--transition);}
 .right-section{padding:14px;border-bottom:1px solid var(--border);}
@@ -423,6 +436,18 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 
     <!-- CENTER -->
     <div class="center-panel">
+      <div>
+        <div class="section-title">📅 13-WEEK PARAMETER VIEW</div>
+        <div class="weekly-table-wrap">
+          <table class="weekly-table" id="weeklyTable">
+            <thead>
+              <tr id="weeklyHeaderWeeks"><th class="wk-param-head">Parameters</th></tr>
+              <tr id="weeklyHeaderAA"><th></th></tr>
+            </thead>
+            <tbody id="weeklyBody"></tbody>
+          </table>
+        </div>
+      </div>
       <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span></div><div class="kpi-row" id="kpi-row"></div></div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-row three">
@@ -711,7 +736,99 @@ function recalculate(){
   setDelta('delta_ar',a2.ar-a1.ar,' pp');setDelta('delta_handled',a2.handled-a1.handled);setDelta('delta_aht',a2.aht-a1.aht);setDelta('delta_absent',a2.absent-a1.absent,' pp');
   for(let i=0;i<10;i++)setDelta('delta_aux'+i,a2.aux[i]-a1.aux[i],' pp');
   setDelta('delta_avail',a2.avail-a1.avail,' pp');setDelta('delta_staffed',a2.staffed-a1.staffed);setDelta('delta_conc',a2.conc-a1.conc);setDelta('delta_hc',a2.hc-a1.hc);setDelta('delta_attrition',a2.attrition-a1.attrition,' pp');setDelta('delta_movin',a2.movin-a1.movin);setDelta('delta_movout',a2.movout-a1.movout);setDelta('delta_hiring',a2.hiring-a1.hiring);setDelta('delta_training',a2.training-a1.training);setDelta('delta_ojt',a2.ojt-a1.ojt);
-  renderKPIs(a1,a2);renderWaterfallChart(a1,a2);renderTornadoChart(a1,a2);renderForecastChart(a1,a2);renderAuxChart(a1,a2);renderTrainingChart(a1,a2);renderDriverRanking(a1,a2);renderImpactSummary(a1,a2);
+  renderKPIs(a1,a2);renderWaterfallChart(a1,a2);renderTornadoChart(a1,a2);renderForecastChart(a1,a2);renderAuxChart(a1,a2);renderTrainingChart(a1,a2);renderDriverRanking(a1,a2);renderImpactSummary(a1,a2);renderWeeklyTable(a1,a2);
+}
+
+/* ============ 13-WEEK PARAMETER VIEW ============ */
+const WEEKS=13;
+function weeklyFlat(v1,v2,dec){
+  const s1=[],s2=[];
+  for(let i=0;i<WEEKS;i++){s1.push(+(+v1).toFixed(dec));s2.push(+(+v2).toFixed(dec));}
+  return{a1:s1,a2:s2};
+}
+function weeklyRamp(v1,v2,growth){
+  const s1=[],s2=[];
+  for(let i=0;i<WEEKS;i++){const f=i/(WEEKS-1);s1.push(Math.round(v1*(1+growth*f)));s2.push(Math.round(v2*(1+growth*f)));}
+  return{a1:s1,a2:s2};
+}
+function weeklyTarget(start1,target1,start2,target2){
+  const s1=[],s2=[];
+  for(let i=0;i<WEEKS;i++){const f=i/(WEEKS-1);s1.push(Math.round(start1+(target1-start1)*f));s2.push(Math.round(start2+(target2-start2)*f));}
+  return{a1:s1,a2:s2};
+}
+function computeWeeklySeries(a1,a2){
+  const s={};
+  s.forecast=weeklyRamp(a1.forecast,a2.forecast,0.18);
+  s.fcmod=weeklyFlat(a1.fcmod,a2.fcmod,1);
+  s.osp=weeklyFlat(a1.osp,a2.osp,0);
+  s.ar=weeklyFlat(a1.ar,a2.ar,1);
+  s.handled=weeklyRamp(a1.handled,a2.handled,0.18);
+  s.aht=weeklyFlat(a1.aht,a2.aht,0);
+  s.absent=weeklyFlat(a1.absent,a2.absent,1);
+  for(let i=0;i<9;i++)s['aux'+(i+1)]=weeklyFlat(a1.aux[i],a2.aux[i],1);
+  s.avail=weeklyFlat(a1.avail,a2.avail,1);
+  s.staffed=weeklyFlat(a1.staffed,a2.staffed,1);
+  s.conc=weeklyFlat(a1.conc,a2.conc,0);
+  const hcTarget1=Math.round(a1.hc+a1.hiring-(a1.hc*a1.attrition/100)+(a1.movin-a1.movout));
+  const hcTarget2=Math.round(a2.hc+a2.hiring-(a2.hc*a2.attrition/100)+(a2.movin-a2.movout));
+  s.hc=weeklyTarget(a1.hc,hcTarget1,a2.hc,hcTarget2);
+  s.attrition=weeklyFlat(a1.attrition,a2.attrition,1);
+  s.movin=weeklyFlat(a1.movin,a2.movin,0);
+  s.movout=weeklyFlat(a1.movout,a2.movout,0);
+  s.hiring=weeklyFlat(a1.hiring,a2.hiring,0);
+  s.training=weeklyFlat(a1.training,a2.training,0);
+  s.ojt=weeklyFlat(a1.ojt,a2.ojt,0);
+  const gap1=[],gap2=[],sl1=[],sl2=[];
+  for(let i=0;i<WEEKS;i++){
+    const req1=Math.round(s.handled.a1[i]*s.aht.a1[i]/(s.staffed.a1[i]*3600*(s.avail.a1[i]/100)*(1-s.absent.a1[i]/100)*s.conc.a1[i]))||0;
+    const req2=Math.round(s.handled.a2[i]*s.aht.a2[i]/(s.staffed.a2[i]*3600*(s.avail.a2[i]/100)*(1-s.absent.a2[i]/100)*s.conc.a2[i]))||0;
+    gap1.push(s.hc.a1[i]-req1);gap2.push(s.hc.a2[i]-req2);
+    const gapPct1=req1?(s.hc.a1[i]-req1)/req1*100:0;
+    const gapPct2=req2?(s.hc.a2[i]-req2)/req2*100:0;
+    sl1.push(+Math.max(0,Math.min(100,s.ar.a1[i]+gapPct1*0.6)).toFixed(1));
+    sl2.push(+Math.max(0,Math.min(100,s.ar.a2[i]+gapPct2*0.6)).toFixed(1));
+  }
+  s.hcgap={a1:gap1,a2:gap2};
+  s.sl={a1:sl1,a2:sl2};
+  return s;
+}
+const weeklyRowDefs=[
+  {key:'forecast',label:'Forecast'},
+  {key:'fcmod',label:'Forecast Mod',suffix:'%'},
+  {key:'osp',label:'OSP Mix',suffix:'%'},
+  {key:'ar',label:'AR%',suffix:'%'},
+  {key:'handled',label:'Handled'},
+  {key:'aht',label:'AHT'},
+  {key:'absent',label:'Absent%',suffix:'%'},
+  {label:'AUX States',header:true},
+  {key:'aux1',label:'AUX 1',suffix:'%'},{key:'aux2',label:'AUX 2',suffix:'%'},{key:'aux3',label:'AUX 3',suffix:'%'},
+  {key:'aux4',label:'AUX 4',suffix:'%'},{key:'aux5',label:'AUX 5',suffix:'%'},{key:'aux6',label:'AUX 6',suffix:'%'},
+  {key:'aux7',label:'AUX 7',suffix:'%'},{key:'aux8',label:'AUX 8',suffix:'%'},{key:'aux9',label:'AUX 9',suffix:'%'},
+  {key:'avail',label:'Avail%',suffix:'%'},
+  {key:'staffed',label:'Staffed'},
+  {key:'conc',label:'Conc'},
+  {key:'hc',label:'HC'},
+  {key:'attrition',label:'Attrition',suffix:'%'},
+  {key:'movin',label:'Move In'},
+  {key:'movout',label:'Move Out'},
+  {key:'hiring',label:'Hiring'},
+  {key:'training',label:'Training'},
+  {key:'ojt',label:'OJT'},
+  {key:'hcgap',label:'HC Gap'},
+  {key:'sl',label:'SL%',suffix:'%'},
+];
+function renderWeeklyTable(a1,a2){
+  const series=computeWeeklySeries(a1,a2);
+  let wh='<th class="wk-param-head">Parameters</th>',ah='<th></th>';
+  for(let w=1;w<=WEEKS;w++){wh+=`<th colspan="2">Week ${w}</th>`;ah+='<th>A1</th><th>A2</th>';}
+  document.getElementById('weeklyHeaderWeeks').innerHTML=wh;
+  document.getElementById('weeklyHeaderAA').innerHTML=ah;
+  document.getElementById('weeklyBody').innerHTML=weeklyRowDefs.map(r=>{
+    if(r.header)return`<tr class="wk-section-row"><td class="wk-param">${r.label}</td><td colspan="${WEEKS*2}"></td></tr>`;
+    let cells='';
+    for(let w=0;w<WEEKS;w++)cells+=`<td>${series[r.key].a1[w]}${r.suffix||''}</td><td>${series[r.key].a2[w]}${r.suffix||''}</td>`;
+    return`<tr><td class="wk-param">${r.label}</td>${cells}</tr>`;
+  }).join('');
 }
 
 /* ============ KPI ============ */
