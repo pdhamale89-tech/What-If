@@ -378,6 +378,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
   <div id="tab-simulation" class="tab-content active">
     <!-- CENTER -->
     <div class="center-panel">
+      <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span><span class="badge badge-period" id="kpiPeriodBadge">Latest Week: Week 13</span></div><div class="kpi-row" id="kpi-row"></div></div>
       <div>
         <div class="section-title" id="weeklyViewTitle">📅 13-WEEK PARAMETER VIEW</div>
         <div class="weekly-table-wrap">
@@ -390,7 +391,6 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
           </table>
         </div>
       </div>
-      <div><div class="section-title">⚡ KEY RESULTS <span class="badge">Real-time</span><span class="badge badge-period" id="kpiPeriodBadge">Latest Week: Week 13</span></div><div class="kpi-row" id="kpi-row"></div></div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-row three">
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon, with AR% and Forecast Mod % trends on the right axis.<ul><li><b>Blue bar</b> = A1 Baseline volume</li><li><b>Teal bar</b> = A2 Optimistic volume</li><li><b>Amber line</b> = A1 AR%</li><li><b>Dashed orange line</b> = A2 AR%</li><li><b>Purple line</b> = A1 Forecast Mod %</li><li><b>Dashed pink line</b> = A2 Forecast Mod %</li></ul></div></div></div><canvas id="forecastChart"></canvas></div>
@@ -837,10 +837,10 @@ function renderForecastChart(){
   forecastChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
     {type:'bar',label:'A1 (Baseline)',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:3,datalabels:{display:false}},
     {type:'bar',label:'A2 (Optimistic)',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:3,datalabels:{display:false}},
-    {type:'line',label:'A1 AR%',data:ar1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:2,datalabels:{display:false}},
-    {type:'line',label:'A2 AR%',data:ar2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:2,datalabels:{display:false}},
-    {type:'line',label:'A1 Forecast Mod %',data:fcmod1D,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.purple,order:1,datalabels:{display:false}},
-    {type:'line',label:'A2 Forecast Mod %',data:fcmod2D,borderColor:c.pink,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.pink,order:1,datalabels:{display:false}},
+    {type:'line',label:'A1 AR%',data:ar1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:2,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {type:'line',label:'A2 AR%',data:ar2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:2,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {type:'line',label:'A1 Forecast Mod %',data:fcmod1D,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {type:'line',label:'A2 Forecast Mod %',data:fcmod2D,borderColor:c.pink,backgroundColor:'transparent',yAxisID:'y2',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.pink,order:1,datalabels:{display:true,color:c.pink,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
     x:{grid:{color:c.grid},ticks:{color:c.text,font:{size:9}}},
     y:{position:'left',grid:{color:c.grid},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
