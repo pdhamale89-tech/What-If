@@ -177,6 +177,9 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .weekly-table tr.wk-collapsible{cursor:pointer;user-select:none;}
 .weekly-table tr.wk-collapsible:hover td{background:var(--bg-hover);}
 .weekly-table .wk-chevron{display:inline-block;width:10px;font-size:8px;}
+.weekly-table tr.wk-group-top td{background:var(--bg-section-header);font-size:10px;}
+.weekly-table tr.wk-group-top td.wk-param{background:var(--bg-section-header);}
+.weekly-table tr.wk-group-sub td.wk-param{padding-left:22px;}
 .weekly-table tbody tr:hover td{background:var(--bg-hover);}
 .weekly-table tbody tr:hover td.wk-param{background:var(--bg-hover);}
 
@@ -713,35 +716,40 @@ function computeDerivedWeekly(wd){
 
 /* ============ WEEKLY / QUARTERLY TABLE ============ */
 const weeklyRowDefs=[
-  {key:'forecast',label:'Forecast',dec:0,step:1,agg:'sum'},
-  {key:'fcmod',label:'Forecast Mod',suffix:'%',dec:1,step:0.5,agg:'avg'},
-  {key:'osp',label:'OSP Mix',suffix:'%',dec:0,step:1,agg:'avg'},
-  {key:'ar',label:'AR%',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'handled',label:'Handled',dec:0,step:1,agg:'sum'},
-  {key:'aht',label:'AHT',dec:0,step:1,agg:'avg'},
-  {key:'absent',label:'Absent%',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {label:'AUX States',header:true,group:'aux'},
-  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,step:0.1,agg:'avg',group:'aux',readonly:true},
-  {key:'avail',label:'Avail%',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'staffed',label:'Staffed',dec:1,step:0.1,agg:'avg'},
-  {key:'conc',label:'Conc',dec:0,step:1,agg:'avg'},
-  {key:'hc',label:'HC',dec:0,step:1,agg:'last'},
-  {key:'attrition',label:'Attrition',suffix:'%',dec:1,step:0.1,agg:'avg'},
-  {key:'movin',label:'Move In',dec:0,step:1,agg:'sum'},
-  {key:'movout',label:'Move Out',dec:0,step:1,agg:'sum'},
-  {key:'hiring',label:'Hiring',dec:0,step:1,agg:'sum'},
-  {key:'training',label:'Training',dec:0,step:1,agg:'avg'},
-  {key:'ojt',label:'OJT',dec:0,step:1,agg:'avg'},
-  {key:'hcgap',label:'HC Gap',dec:0,agg:'last',derived:true},
-  {key:'sl',label:'SL%',suffix:'%',dec:1,agg:'avg',derived:true},
+  {label:'CONTACTS',header:true,toggleGroup:'contacts',level:0},
+  {key:'forecast',label:'Forecast',dec:0,agg:'sum',groups:['contacts']},
+  {key:'fcmod',label:'Forecast Mod%',suffix:'%',dec:1,agg:'avg',groups:['contacts']},
+  {key:'osp',label:'OSP Mix',suffix:'%',dec:0,agg:'avg',groups:['contacts']},
+  {key:'ar',label:'AR%',suffix:'%',dec:1,agg:'avg',groups:['contacts']},
+  {key:'handled',label:'Handled',dec:0,agg:'sum',groups:['contacts']},
+
+  {label:'PRODUCTIVITY ASSUMPTIONS',header:true,toggleGroup:'productivity',level:0},
+  {key:'aht',label:'AHT (sec)',dec:0,agg:'avg',groups:['productivity']},
+  {key:'absent',label:'Absenteeism%',suffix:'%',dec:1,agg:'avg',groups:['productivity']},
+  {label:'AUX States',header:true,toggleGroup:'aux',level:1,groups:['productivity']},
+  {key:'aux1',label:'AUX 1',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux2',label:'AUX 2',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux3',label:'AUX 3',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux4',label:'AUX 4',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux5',label:'AUX 5',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux6',label:'AUX 6',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux7',label:'AUX 7',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux8',label:'AUX 8',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'aux9',label:'AUX 9',suffix:'%',dec:1,agg:'avg',groups:['productivity','aux']},
+  {key:'avail',label:'Availability %',suffix:'%',dec:1,agg:'avg',groups:['productivity']},
+  {key:'staffed',label:'Staffed Time (hrs)',dec:1,agg:'avg',groups:['productivity']},
+  {key:'conc',label:'Concurrency',dec:0,agg:'avg',groups:['productivity']},
+  {key:'sl',label:'SL%',suffix:'%',dec:1,agg:'avg',derived:true,groups:['productivity']},
+
+  {label:'HEADCOUNT ASSUMPTIONS',header:true,toggleGroup:'headcount',level:0},
+  {key:'hc',label:'Actual HC',dec:0,agg:'last',groups:['headcount']},
+  {key:'attrition',label:'Attrition%',suffix:'%',dec:1,agg:'avg',groups:['headcount']},
+  {key:'movin',label:'Movement In',dec:0,agg:'sum',groups:['headcount']},
+  {key:'movout',label:'Movement Out',dec:0,agg:'sum',groups:['headcount']},
+  {key:'hiring',label:'Hiring',dec:0,agg:'sum',groups:['headcount']},
+  {key:'training',label:'Training',dec:0,agg:'avg',groups:['headcount']},
+  {key:'ojt',label:'OJT',dec:0,agg:'avg',groups:['headcount']},
+  {key:'hcgap',label:'HC Gap',dec:0,agg:'last',derived:true,groups:['headcount']},
 ];
 
 function toggleGroup(group){
@@ -759,12 +767,15 @@ function renderWeeklyTable(){
 
   const derived=computeDerivedWeekly(weeklyData);
   document.getElementById('weeklyBody').innerHTML=weeklyRowDefs.map(r=>{
+    const hiddenByAncestor = r.groups && r.groups.some(g=>collapsedGroups.has(g));
     if(r.header){
-      const collapsed=r.group&&collapsedGroups.has(r.group);
+      if(hiddenByAncestor) return '';
+      const collapsed=collapsedGroups.has(r.toggleGroup);
       const chevron=collapsed?'▶':'▼';
-      return `<tr class="wk-section-row wk-collapsible" onclick="toggleGroup('${r.group}')"><td class="wk-param"><span class="wk-chevron">${chevron}</span> ${r.label}</td><td colspan="${periods.length*2}"></td></tr>`;
+      const levelClass = r.level===0 ? 'wk-group-top' : 'wk-group-sub';
+      return `<tr class="wk-section-row ${levelClass} wk-collapsible" onclick="toggleGroup('${r.toggleGroup}')"><td class="wk-param"><span class="wk-chevron">${chevron}</span> ${r.label}</td><td colspan="${periods.length*2}"></td></tr>`;
     }
-    if(r.group&&collapsedGroups.has(r.group)) return '';
+    if(hiddenByAncestor) return '';
     let cells='';
     periods.forEach((p,pi)=>{
       ['a1','a2'].forEach(side=>{
