@@ -395,10 +395,14 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
           </table>
         </div>
       </div>
-      <div class="section-title">⚙ Analytics</div>
+      <div class="section-title">⚙ Analytics<div class="seg-toggle" id="forecastMetricToggle" style="margin-left:auto"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div></div>
       <div class="chart-row two">
-        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Handled volume comparison across the horizon, with a trend line on the right axis.<ul><li><b>Blue bar</b> = A1 Baseline volume</li><li><b>Teal bar</b> = A2 Optimistic volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div></div><canvas id="forecastChart"></canvas></div>
-        <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li>Solid stack = A1 Baseline, lighter stack = A2 Optimistic</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><canvas id="headcountChart"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA1Title">FORECAST COMPARISON - A1 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline handled volume per period, with a trend line on the right axis.<ul><li><b>Blue bar</b> = A1 volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><canvas id="forecastChartA1"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA2Title">FORECAST COMPARISON - A2 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A2 Optimistic handled volume per period, with a trend line on the right axis.<ul><li><b>Teal bar</b> = A2 volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><canvas id="forecastChartA2"></canvas></div>
+      </div>
+      <div class="chart-row two">
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountA1Title">HEADCOUNT DETAILS - A1 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li><b>Line (right axis)</b> = A1 Attrition %</li></ul></div></div></div><canvas id="headcountChartA1"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountA2Title">HEADCOUNT DETAILS - A2 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A2 Optimistic stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li><b>Line (right axis)</b> = A2 Attrition %</li></ul></div></div></div><canvas id="headcountChartA2"></canvas></div>
       </div>
     </div>
 
@@ -522,7 +526,7 @@ let savedNotes=[];
 let viewMode='weekly';
 const collapsedGroups=new Set();
 
-let forecastChartInst,headcountChartInst;
+let forecastChartInstA1,forecastChartInstA2,headcountChartInstA1,headcountChartInstA2;
 Chart.register(ChartDataLabels);
 
 /* ============ INIT ============ */
@@ -662,8 +666,10 @@ function setViewMode(mode){
   document.querySelectorAll('#viewToggle .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
   const v=VIEW_LABELS[mode];
   document.getElementById('weeklyViewTitle').textContent = `📅 ${v.title} PARAMETER VIEW`;
-  document.getElementById('forecastChartTitle').textContent = `FORECAST COMPARISON ${v.suffix}`;
-  document.getElementById('headcountChartTitle').textContent = `HEADCOUNT DETAILS ${v.suffix}`;
+  document.getElementById('forecastA1Title').textContent = `FORECAST COMPARISON - A1 ${v.suffix}`;
+  document.getElementById('forecastA2Title').textContent = `FORECAST COMPARISON - A2 ${v.suffix}`;
+  document.getElementById('headcountA1Title').textContent = `HEADCOUNT DETAILS - A1 ${v.suffix}`;
+  document.getElementById('headcountA2Title').textContent = `HEADCOUNT DETAILS - A2 ${v.suffix}`;
   const fiscalWeekGroup=document.getElementById('filterFiscalWeekGroup');
   if(mode==='weekly'){
     fiscalWeekGroup.style.display='';
@@ -851,41 +857,41 @@ function setForecastMetric(metric){
   renderForecastChart();
 }
 
-function renderForecastChart(){
-  const ctx=document.getElementById('forecastChart').getContext('2d');if(forecastChartInst)forecastChartInst.destroy();const c=cc();
+function renderForecastChartSide(side){
+  const canvasId = side==='a1' ? 'forecastChartA1' : 'forecastChartA2';
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const prevInst = side==='a1' ? forecastChartInstA1 : forecastChartInstA2;
+  if(prevInst) prevInst.destroy();
+  const c=cc();
   const periods=getPeriods();
   const labels=periods.map(p=>p.label);
-  const a1D=periods.map(p=>aggVals(weeklyData.handled.a1,p.idx,'sum',0));
-  const a2D=periods.map(p=>aggVals(weeklyData.handled.a2,p.idx,'sum',0));
+  const volD=periods.map(p=>aggVals(weeklyData.handled[side],p.idx,'sum',0));
 
-  let metricDatasets, metricMin, metricMax;
+  let metricData, metricLabel, metricColor, metricMin, metricMax;
   if(forecastMetric==='fcmod'){
-    const fcmod1D=periods.map(p=>aggVals(weeklyData.fcmod.a1,p.idx,'avg',1));
-    const fcmod2D=periods.map(p=>aggVals(weeklyData.fcmod.a2,p.idx,'avg',1));
-    metricDatasets=[
-      {type:'line',label:'A1 Forecast Mod %',data:fcmod1D,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-      {type:'line',label:'A2 Forecast Mod %',data:fcmod2D,borderColor:c.pink,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.pink,order:1,datalabels:{display:true,color:c.pink,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    ];
-    metricMin=-20; metricMax=20;
+    metricData=periods.map(p=>aggVals(weeklyData.fcmod[side],p.idx,'avg',1));
+    metricLabel='Forecast Mod %'; metricColor=side==='a1'?c.purple:c.pink; metricMin=-20; metricMax=20;
   } else {
-    const ar1D=periods.map(p=>aggVals(weeklyData.ar.a1,p.idx,'avg',1));
-    const ar2D=periods.map(p=>aggVals(weeklyData.ar.a2,p.idx,'avg',1));
-    metricDatasets=[
-      {type:'line',label:'A1 AR%',data:ar1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-      {type:'line',label:'A2 AR%',data:ar2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    ];
-    metricMin=0; metricMax=100;
+    metricData=periods.map(p=>aggVals(weeklyData.ar[side],p.idx,'avg',1));
+    metricLabel='AR%'; metricColor=side==='a1'?c.amber:c.orange; metricMin=0; metricMax=100;
   }
+  const barColor=side==='a1'?c.blue:c.teal;
+  const scenarioLabel=side==='a1'?'A1 (Baseline)':'A2 (Optimistic)';
 
-  forecastChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {type:'bar',label:'A1 (Baseline)',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
-    {type:'bar',label:'A2 (Optimistic)',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:false}},
-    ...metricDatasets,
+  const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {type:'bar',label:`${scenarioLabel} Volume`,data:volD,backgroundColor:barColor,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'line',label:metricLabel,data:metricData,borderColor:metricColor,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:metricColor,order:1,datalabels:{display:true,color:metricColor,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
     y1:{position:'right',min:metricMin,max:metricMax,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
   }}});
+
+  if(side==='a1') forecastChartInstA1=inst; else forecastChartInstA2=inst;
+}
+function renderForecastChart(){
+  renderForecastChartSide('a1');
+  renderForecastChartSide('a2');
 }
 
 function hexToRgba(hex,alpha){
@@ -903,34 +909,36 @@ const HEADCOUNT_STAGES=[
   {key:'ojt',label:'OJT',agg:'avg',dec:0},
 ];
 
-function renderHeadcountChart(){
-  const ctx=document.getElementById('headcountChart').getContext('2d');if(headcountChartInst)headcountChartInst.destroy();const c=cc();
+function renderHeadcountChartSide(side){
+  const canvasId = side==='a1' ? 'headcountChartA1' : 'headcountChartA2';
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  const prevInst = side==='a1' ? headcountChartInstA1 : headcountChartInstA2;
+  if(prevInst) prevInst.destroy();
+  const c=cc();
   const periods=getPeriods();
   const labels=periods.map(p=>p.label);
   const stageColors=[c.blue,c.green,c.red,c.teal,c.purple,c.pink];
 
-  const barDatasets=[];
-  ['a1','a2'].forEach(side=>{
-    const stackId=side==='a1'?'A1':'A2';
-    const scenarioLabel=side==='a1'?'A1':'A2';
-    HEADCOUNT_STAGES.forEach((s,i)=>{
-      const data=periods.map(p=>aggVals(weeklyData[s.key][side],p.idx,s.agg,s.dec));
-      barDatasets.push({type:'bar',label:`${s.label} (${scenarioLabel})`,data,backgroundColor:side==='a1'?stageColors[i]:hexToRgba(stageColors[i],0.45),stack:stackId,yAxisID:'y',order:2,datalabels:{display:false}});
-    });
+  const barDatasets=HEADCOUNT_STAGES.map((s,i)=>{
+    const data=periods.map(p=>aggVals(weeklyData[s.key][side],p.idx,s.agg,s.dec));
+    return {type:'bar',label:s.label,data,backgroundColor:stageColors[i],stack:'stage',yAxisID:'y',order:2,datalabels:{display:false}};
   });
 
-  const attr1D=periods.map(p=>aggVals(weeklyData.attrition.a1,p.idx,'avg',1));
-  const attr2D=periods.map(p=>aggVals(weeklyData.attrition.a2,p.idx,'avg',1));
-  const lineDatasets=[
-    {type:'line',label:'A1 Attrition%',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {type:'line',label:'A2 Attrition%',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-  ];
+  const attrD=periods.map(p=>aggVals(weeklyData.attrition[side],p.idx,'avg',1));
+  const lineColor=side==='a1'?c.amber:c.orange;
+  const lineDataset={type:'line',label:'Attrition%',data:attrD,borderColor:lineColor,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:lineColor,order:1,datalabels:{display:true,color:lineColor,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
 
-  headcountChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,...lineDatasets]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{display:false}},scales:{
+  const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,lineDataset]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{display:false}},scales:{
     x:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{stacked:true,position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
   }}});
+
+  if(side==='a1') headcountChartInstA1=inst; else headcountChartInstA2=inst;
+}
+function renderHeadcountChart(){
+  renderHeadcountChartSide('a1');
+  renderHeadcountChartSide('a2');
 }
 
 /* ============ AI-GENERATED INSIGHTS ============ */
