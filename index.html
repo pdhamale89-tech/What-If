@@ -167,6 +167,9 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .queue-sl-caption b{color:var(--text-primary);font-style:normal;}
 .queue-sl-reset{cursor:pointer;color:var(--accent);margin-left:8px;font-weight:600;font-style:normal;}
 .queue-sl-reset:hover{text-decoration:underline;}
+.queue-sl-insight{margin-top:12px;padding:10px 12px;background:var(--bg-panel);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--radius-sm);font-size:11px;line-height:1.6;color:var(--text-secondary);}
+.queue-sl-insight:empty{display:none;}
+.queue-sl-insight .action-label{color:var(--accent);font-weight:700;}
 .queue-sl-list{display:flex;flex-direction:column;}
 .queue-sl-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--border-light);font-size:12px;}
 .queue-sl-row:last-child{border-bottom:none;}
@@ -430,10 +433,11 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       </div>
       <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li><li>Click any bar to see that period's detail summary below</li></ul></div></div></div>
+        <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li><li>Click any bar to drill into queue-level SL detail, insights and recommended action for that period</li></ul></div></div></div>
         <div style="height:260px;"><canvas id="hcPlanChart"></canvas></div>
-        <div class="queue-sl-caption" id="queueSlCaption">Over-plan queues still below 90% SL</div>
+        <div class="queue-sl-caption" id="queueSlCaption">👆 Click a bar above to see queue-level SL detail for that period</div>
         <div class="queue-sl-list" id="queueSlList"></div>
+        <div class="queue-sl-insight" id="queueSlInsight"></div>
       </div>
     </div>
 
@@ -1038,7 +1042,7 @@ function renderHeadcountChart(){
 }
 
 /* ============ HEADCOUNT IMPACT ON SL ============ */
-const QUEUE_SL_BELOW_TARGET=[
+const QUEUE_SL_BASE=[
   {name:'Enterprise Pro/Core ID',sl:74.7,hc:20,plan:18},
   {name:'LATAM Top Customers Spanish',sl:75.0,hc:18,plan:17},
   {name:'LATAM AH Portuguese',sl:76.5,hc:10,plan:9},
@@ -1056,14 +1060,14 @@ function renderHcPlanChart(derived){
   hcPlanActual=periods.map(p=>aggVals(weeklyData.hc.a1,p.idx,'last',0));
   hcPlanPlanArr=periods.map(p=>aggVals(weeklyData.hc.a2,p.idx,'last',0));
   hcPlanSl=periods.map(p=>aggVals(derived.sl.a1,p.idx,'avg',1));
-  resetHcPlanCaption();
+  resetHcPlanDetail();
   hcPlanChartInst=new Chart(ctx,{type:'bar',data:{labels:hcPlanLabels,datasets:[
     {type:'bar',label:'Actual',data:hcPlanActual,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
     {type:'bar',label:'Plan',data:hcPlanPlanArr,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:false}},
     {type:'line',label:'SL %',data:hcPlanSl,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,onClick:(evt,elements,chart)=>{
       const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
-      if(pts.length) updateHcPlanCaption(pts[0].index);
+      if(pts.length) showHcPlanDetail(pts[0].index);
     },onHover:(evt,elements)=>{
       if(evt.native&&evt.native.target) evt.native.target.style.cursor=elements.length?'pointer':'default';
     },plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
@@ -1073,25 +1077,63 @@ function renderHcPlanChart(derived){
   }}});
 }
 
-function updateHcPlanCaption(idx){
+function computeQueueDetailForPeriod(idx){
+  const periodSl=hcPlanSl[idx];
+  const avgSl=hcPlanSl.reduce((a,b)=>a+b,0)/hcPlanSl.length;
+  const slDiff=periodSl-avgSl;
+  const periodActual=hcPlanActual[idx];
+  const avgActual=hcPlanActual.reduce((a,b)=>a+b,0)/hcPlanActual.length;
+  const hcRatio=avgActual?periodActual/avgActual:1;
+  return QUEUE_SL_BASE.map(q=>{
+    const sl=Math.max(45,Math.min(95,+(q.sl+slDiff).toFixed(1)));
+    const plan=Math.max(1,Math.round(q.plan*hcRatio));
+    const hc=Math.max(1,Math.round(q.hc*hcRatio));
+    return {name:q.name,sl,hc,plan,delta:hc-plan};
+  }).sort((a,b)=>a.sl-b.sl);
+}
+
+function showHcPlanDetail(idx){
   const label=hcPlanLabels[idx]; if(label===undefined) return;
   const actual=hcPlanActual[idx], plan=hcPlanPlanArr[idx], sl=hcPlanSl[idx];
   const delta=actual-plan;
-  const status = sl<90 ? 'still below 90% SL target' : 'meeting the 90% SL target';
-  const el=document.getElementById('queueSlCaption');
-  if(el) el.innerHTML = `<b>${label}</b>: HC ${fmt(actual)} vs plan ${fmt(plan)} (${delta>=0?'+':''}${delta}) · SL ${sl.toFixed(1)}% — ${status} <span class="queue-sl-reset" onclick="resetHcPlanCaption()">✕ Clear</span>`;
+  const queues=computeQueueDetailForPeriod(idx);
+  const below90=queues.filter(q=>q.sl<90);
+
+  const capEl=document.getElementById('queueSlCaption');
+  if(capEl) capEl.innerHTML=`<b>${label}</b> — HC ${fmt(actual)} vs plan ${fmt(plan)} (${delta>=0?'+':''}${delta}) · Overall SL ${sl.toFixed(1)}% <span class="queue-sl-reset" onclick="resetHcPlanDetail()">✕ Clear</span>`;
+
+  const listEl=document.getElementById('queueSlList');
+  if(listEl){
+    listEl.innerHTML = below90.length
+      ? below90.map(q=>`<div class="queue-sl-row"><span class="queue-sl-name">${q.name}</span><span class="queue-sl-metrics"><b>SL ${q.sl.toFixed(1)}%</b> · HC ${q.hc} vs plan ${q.plan} (${q.delta>=0?'+':''}${q.delta})</span></div>`).join('')
+      : `<div class="queue-sl-row"><span class="queue-sl-name">No queues below 90% SL for ${label}.</span></div>`;
+  }
+
+  const insightEl=document.getElementById('queueSlInsight');
+  if(insightEl){
+    let insight,action;
+    if(below90.length===0){
+      insight=`All tracked queues are meeting the 90% SL target in ${label}.`;
+      action=`No immediate staffing action needed for ${label} — continue monitoring.`;
+    } else {
+      const worst=below90[0];
+      const overstaffedCount=below90.filter(q=>q.delta>0).length;
+      insight=`${below90.length} of ${queues.length} tracked queues are below the 90% SL target in ${label}, led by ${worst.name} at ${worst.sl.toFixed(1)}%. ${overstaffedCount} of those ${overstaffedCount===1?'is':'are'} already at or above planned headcount, suggesting the shortfall is driven more by skill-mix, scheduling, or handle time than raw staffing.`;
+      action=overstaffedCount>=Math.ceil(below90.length/2)
+        ? `Recommend a scheduling/skill-mix review for the bottom queues before adding headcount — most are already at or above plan.`
+        : `Recommend prioritizing hiring/reallocation toward ${worst.name} and other understaffed queues to close the SL gap fastest.`;
+    }
+    insightEl.innerHTML=`<div><span class="action-label">💡 Insight:</span> ${insight}</div><div style="margin-top:6px;"><span class="action-label">✅ Recommended Action:</span> ${action}</div>`;
+  }
 }
 
-function resetHcPlanCaption(){
-  const el=document.getElementById('queueSlCaption');
-  if(el) el.textContent='Over-plan queues still below 90% SL';
-}
-
-function renderQueueSlList(){
-  document.getElementById('queueSlList').innerHTML=QUEUE_SL_BELOW_TARGET.map(q=>{
-    const delta=q.hc-q.plan;
-    return `<div class="queue-sl-row"><span class="queue-sl-name">${q.name}</span><span class="queue-sl-metrics"><b>SL ${q.sl.toFixed(1)}%</b> · HC ${q.hc} vs plan ${q.plan} (${delta>=0?'+':''}${delta})</span></div>`;
-  }).join('');
+function resetHcPlanDetail(){
+  const capEl=document.getElementById('queueSlCaption');
+  if(capEl) capEl.textContent='👆 Click a bar above to see queue-level SL detail for that period';
+  const listEl=document.getElementById('queueSlList');
+  if(listEl) listEl.innerHTML='';
+  const insightEl=document.getElementById('queueSlInsight');
+  if(insightEl) insightEl.innerHTML='';
 }
 
 /* ============ AI-GENERATED INSIGHTS ============ */
@@ -1172,7 +1214,6 @@ function refreshOutputs(){
   renderForecastChart();
   renderHeadcountChart();
   renderHcPlanChart(derived);
-  renderQueueSlList();
   renderInsights(derived);
   const trendsTab=document.getElementById('tab-trends');
   if(trendsTab && trendsTab.classList.contains('active')) renderTrendsTab();
