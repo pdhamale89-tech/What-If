@@ -177,10 +177,11 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .trends-legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
 .trend-group-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-section-header);color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.6px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;margin-top:16px;transition:background var(--transition);}
 .trend-group-header:hover{background:var(--bg-hover);}
-.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:12px 0 4px;}
-.trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;}
-.trend-card h4{font-size:10px;font-weight:600;color:var(--text-primary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;}
-.trend-card canvas{width:100% !important;max-height:100px;}
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin:12px 0 4px;}
+.trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.trend-card h4{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px;}
+.trend-card .trend-canvas-wrap{height:200px;}
+.trend-card canvas{width:100% !important;}
 .trend-subheading{grid-column:1/-1;font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
 
 /* WEEKLY / QUARTERLY TABLE */
@@ -885,7 +886,7 @@ function renderTrendsTab(){
     weeklyRowDefs.forEach(r=>{
       if(r.header || !r.groups || r.groups[0]!==group) return;
       if(r.key==='aux1') html+='<div class="trend-subheading">AUX States</div>';
-      html+=`<div class="trend-card"><h4>${r.label}</h4><canvas id="trendChart_${r.key}"></canvas></div>`;
+      html+=`<div class="trend-card"><h4>${r.label}</h4><div class="trend-canvas-wrap"><canvas id="trendChart_${r.key}"></canvas></div></div>`;
     });
     html+='</div>';
   });
@@ -902,11 +903,11 @@ function renderTrendsTab(){
     const a1D=periods.map(p=>aggVals(src.a1,p.idx,r.agg,r.dec));
     const a2D=periods.map(p=>aggVals(src.a2,p.idx,r.agg,r.dec));
     trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[
-      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:2,pointBackgroundColor:c.blue,datalabels:{display:false}},
-      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:2,pointBackgroundColor:c.teal,datalabels:{display:false}},
+      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,datalabels:{display:false}},
+      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:c.teal,datalabels:{display:false}},
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{
-      x:{grid:{display:false},ticks:{color:c.text,font:{size:7},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
-      y:{grid:{display:false},ticks:{color:c.text,font:{size:8}}}
+      x:{grid:{display:false},ticks:{color:c.text,font:{size:10},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
+      y:{grid:{display:false},ticks:{color:c.text,font:{size:10}}}
     }}});
   });
 }
