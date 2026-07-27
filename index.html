@@ -395,10 +395,10 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
           </table>
         </div>
       </div>
-      <div class="section-title">⚙ Analytics<div class="seg-toggle" id="forecastMetricToggle" style="margin-left:auto"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div></div>
+      <div class="section-title">⚙ Analytics</div>
       <div class="chart-row two">
-        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA1Title">FORECAST COMPARISON - A1 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline handled volume per period, with a trend line on the right axis.<ul><li><b>Blue bar</b> = A1 volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><canvas id="forecastChartA1"></canvas></div>
-        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA2Title">FORECAST COMPARISON - A2 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A2 Optimistic handled volume per period, with a trend line on the right axis.<ul><li><b>Teal bar</b> = A2 volume</li><li>Use the toggle above to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><canvas id="forecastChartA2"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA1Title">FORECAST COMPARISON - A1 (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggleA1"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('a1','ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('a1','fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline handled volume per period, with a trend line on the right axis.<ul><li><b>Blue bar</b> = A1 volume</li><li>Use the toggle to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div></div><canvas id="forecastChartA1"></canvas></div>
+        <div class="chart-card"><div class="chart-card-header"><div><h3 id="forecastA2Title">FORECAST COMPARISON - A2 (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggleA2"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('a2','ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('a2','fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A2 Optimistic handled volume per period, with a trend line on the right axis.<ul><li><b>Teal bar</b> = A2 volume</li><li>Use the toggle to switch the trend line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div></div><canvas id="forecastChartA2"></canvas></div>
       </div>
       <div class="chart-row two">
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountA1Title">HEADCOUNT DETAILS - A1 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li><b>Line (right axis)</b> = A1 Attrition %</li></ul></div></div></div><canvas id="headcountChartA1"></canvas></div>
@@ -850,11 +850,11 @@ function renderKPIs(derived){
 }
 
 /* ============ CHARTS ============ */
-let forecastMetric='ar';
-function setForecastMetric(metric){
-  forecastMetric=metric;
-  document.querySelectorAll('#forecastMetricToggle .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.metric===metric));
-  renderForecastChart();
+let forecastMetricA1='ar', forecastMetricA2='ar';
+function setForecastMetric(side,metric){
+  if(side==='a1') forecastMetricA1=metric; else forecastMetricA2=metric;
+  document.querySelectorAll(`#forecastMetricToggle${side.toUpperCase()} .seg-btn`).forEach(b=>b.classList.toggle('active', b.dataset.metric===metric));
+  renderForecastChartSide(side);
 }
 
 function renderForecastChartSide(side){
@@ -867,8 +867,9 @@ function renderForecastChartSide(side){
   const labels=periods.map(p=>p.label);
   const volD=periods.map(p=>aggVals(weeklyData.handled[side],p.idx,'sum',0));
 
+  const metric = side==='a1' ? forecastMetricA1 : forecastMetricA2;
   let metricData, metricLabel, metricColor, metricMin, metricMax;
-  if(forecastMetric==='fcmod'){
+  if(metric==='fcmod'){
     metricData=periods.map(p=>aggVals(weeklyData.fcmod[side],p.idx,'avg',1));
     metricLabel='Forecast Mod %'; metricColor=side==='a1'?c.purple:c.pink; metricMin=-20; metricMax=20;
   } else {
@@ -881,7 +882,7 @@ function renderForecastChartSide(side){
   const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
     {type:'bar',label:`${scenarioLabel} Volume`,data:volD,backgroundColor:barColor,yAxisID:'y',order:2,datalabels:{display:false}},
     {type:'line',label:metricLabel,data:metricData,borderColor:metricColor,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:metricColor,order:1,datalabels:{display:true,color:metricColor,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
     y1:{position:'right',min:metricMin,max:metricMax,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
@@ -928,7 +929,7 @@ function renderHeadcountChartSide(side){
   const lineColor=side==='a1'?c.amber:c.orange;
   const lineDataset={type:'line',label:'Attrition%',data:attrD,borderColor:lineColor,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:lineColor,order:1,datalabels:{display:true,color:lineColor,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
 
-  const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,lineDataset]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{display:false}},scales:{
+  const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,lineDataset]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{display:false}},scales:{
     x:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{stacked:true,position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
