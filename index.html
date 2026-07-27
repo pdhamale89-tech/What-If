@@ -413,7 +413,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       </div>
       <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3>HEADCOUNT: ACTUAL VS PLAN (BY FISCAL YEAR)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual vs Plan headcount by fiscal year, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li></ul></div></div></div>
+        <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li></ul></div></div></div>
         <div style="height:260px;"><canvas id="hcPlanChart"></canvas></div>
         <div class="queue-sl-caption" id="queueSlCaption">Over-plan queues still below 90% SL</div>
         <div class="queue-sl-list" id="queueSlList"></div>
@@ -684,6 +684,7 @@ function setViewMode(mode){
   document.getElementById('forecastA2Title').textContent = `FORECAST COMPARISON - A2 ${v.suffix}`;
   document.getElementById('headcountA1Title').textContent = `HEADCOUNT DETAILS - A1 ${v.suffix}`;
   document.getElementById('headcountA2Title').textContent = `HEADCOUNT DETAILS - A2 ${v.suffix}`;
+  document.getElementById('hcPlanChartTitle').textContent = `HEADCOUNT: ACTUAL VS PLAN ${v.suffix}`;
   const fiscalWeekGroup=document.getElementById('filterFiscalWeekGroup');
   if(mode==='weekly'){
     fiscalWeekGroup.style.display='';
@@ -956,12 +957,7 @@ function renderHeadcountChart(){
   renderHeadcountChartSide('a2');
 }
 
-/* ============ HC vs PLAN BY FISCAL YEAR ============ */
-const FY_HC_PLAN=[
-  {fy:'FY25',actual:1800,plan:2050,sl:80},
-  {fy:'FY26',actual:1900,plan:2100,sl:86},
-  {fy:'FY27',actual:2150,plan:2300,sl:90},
-];
+/* ============ HEADCOUNT IMPACT ON SL ============ */
 const QUEUE_SL_BELOW_TARGET=[
   {name:'Enterprise Pro/Core ID',sl:74.7,hc:20,plan:18},
   {name:'LATAM Top Customers Spanish',sl:75.0,hc:18,plan:17},
@@ -971,13 +967,17 @@ const QUEUE_SL_BELOW_TARGET=[
   {name:'KOR Storage Upsell Korean',sl:79.6,hc:19,plan:18},
 ];
 
-function renderHcPlanChart(){
+function renderHcPlanChart(derived){
   const ctx=document.getElementById('hcPlanChart').getContext('2d');if(hcPlanChartInst)hcPlanChartInst.destroy();const c=cc();
-  const labels=FY_HC_PLAN.map(d=>d.fy);
+  const periods=getPeriods();
+  const labels=periods.map(p=>p.label);
+  const actualD=periods.map(p=>aggVals(weeklyData.hc.a1,p.idx,'last',0));
+  const planD=periods.map(p=>aggVals(weeklyData.hc.a2,p.idx,'last',0));
+  const slD=periods.map(p=>aggVals(derived.sl.a1,p.idx,'avg',1));
   hcPlanChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {type:'bar',label:'Actual',data:FY_HC_PLAN.map(d=>d.actual),backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
-    {type:'bar',label:'Plan',data:FY_HC_PLAN.map(d=>d.plan),backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:false}},
-    {type:'line',label:'SL %',data:FY_HC_PLAN.map(d=>d.sl),borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
+    {type:'bar',label:'Actual',data:actualD,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'bar',label:'Plan',data:planD,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'line',label:'SL %',data:slD,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y:{position:'left',min:0,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'K':v}},
@@ -1069,7 +1069,7 @@ function refreshOutputs(){
   renderKPIs(derived);
   renderForecastChart();
   renderHeadcountChart();
-  renderHcPlanChart();
+  renderHcPlanChart(derived);
   renderQueueSlList();
   renderInsights(derived);
 }
