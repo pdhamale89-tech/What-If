@@ -909,9 +909,10 @@ function renderTrendsTab(){
     const src=r.derived?derived[r.key]:weeklyData[r.key];
     const a1D=periods.map(p=>aggVals(src.a1,p.idx,r.agg,r.dec));
     const a2D=periods.map(p=>aggVals(src.a2,p.idx,r.agg,r.dec));
+    const fmtTrend=v=>v+(r.suffix||'');
     trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[
-      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,datalabels:{display:false}},
-      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:c.teal,datalabels:{display:false}},
+      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,datalabels:{display:true,color:c.blue,align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
+      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:c.teal,datalabels:{display:true,color:c.teal,align:'bottom',font:{size:7,weight:'bold'},formatter:fmtTrend}},
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{
       x:{grid:{display:false},ticks:{color:c.text,font:{size:10},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
       y:{grid:{display:false},ticks:{color:c.text,font:{size:10}}}
@@ -979,7 +980,7 @@ function renderForecastChartSide(side){
   const scenarioLabel=side==='a1'?'A1 (Baseline)':'A2 (Optimistic)';
 
   const inst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
-    {type:'bar',label:`${scenarioLabel} Volume`,data:volD,backgroundColor:barColor,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'bar',label:`${scenarioLabel} Volume`,data:volD,backgroundColor:barColor,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
     {type:'line',label:metricLabel,data:metricData,borderColor:metricColor,backgroundColor:'transparent',yAxisID:'y1',tension:0.4,borderWidth:2,pointRadius:3,pointBackgroundColor:metricColor,order:1,datalabels:{display:true,color:metricColor,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
@@ -1021,7 +1022,7 @@ function renderHeadcountChartSide(side){
 
   const barDatasets=HEADCOUNT_STAGES.map((s,i)=>{
     const data=periods.map(p=>aggVals(weeklyData[s.key][side],p.idx,s.agg,s.dec));
-    return {type:'bar',label:s.label,data,backgroundColor:stageColors[i],stack:'stage',yAxisID:'y',order:2,datalabels:{display:false}};
+    return {type:'bar',label:s.label,data,backgroundColor:stageColors[i],stack:'stage',yAxisID:'y',order:2,datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>0,color:'#fff',anchor:'center',align:'center',font:{size:8,weight:'bold'},formatter:v=>v}};
   });
 
   const attrD=periods.map(p=>aggVals(weeklyData.attrition[side],p.idx,'avg',1));
@@ -1062,8 +1063,8 @@ function renderHcPlanChart(derived){
   hcPlanSl=periods.map(p=>aggVals(derived.sl.a1,p.idx,'avg',1));
   resetHcPlanDetail();
   hcPlanChartInst=new Chart(ctx,{type:'bar',data:{labels:hcPlanLabels,datasets:[
-    {type:'bar',label:'Actual',data:hcPlanActual,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
-    {type:'bar',label:'Plan',data:hcPlanPlanArr,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'bar',label:'Actual',data:hcPlanActual,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
+    {type:'bar',label:'Plan',data:hcPlanPlanArr,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
     {type:'line',label:'SL %',data:hcPlanSl,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,onClick:(evt,elements,chart)=>{
       const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
