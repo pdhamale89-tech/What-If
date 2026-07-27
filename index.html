@@ -163,6 +163,13 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .data-table th{text-align:left;padding:6px 8px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.3px;}
 .data-table td{padding:5px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary);}
 .data-table tr:hover td{background:var(--bg-hover);}
+.queue-sl-caption{text-align:center;font-size:11px;color:var(--text-secondary);font-style:italic;margin:10px 0 14px;}
+.queue-sl-list{display:flex;flex-direction:column;}
+.queue-sl-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 2px;border-bottom:1px solid var(--border-light);font-size:12px;}
+.queue-sl-row:last-child{border-bottom:none;}
+.queue-sl-name{color:var(--text-primary);}
+.queue-sl-metrics{color:var(--text-secondary);white-space:nowrap;font-size:11px;}
+.queue-sl-metrics b{color:var(--red);font-weight:700;}
 
 /* WEEKLY / QUARTERLY TABLE */
 .weekly-table-wrap{overflow-x:auto;max-height:420px;overflow-y:auto;}
@@ -404,6 +411,13 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountA1Title">HEADCOUNT DETAILS - A1 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 Baseline stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li><b>Line (right axis)</b> = A1 Attrition %</li></ul></div></div></div><canvas id="headcountChartA1"></canvas></div>
         <div class="chart-card"><div class="chart-card-header"><div><h3 id="headcountA2Title">HEADCOUNT DETAILS - A2 (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A2 Optimistic stacked headcount stage values per period, from the Parameter View.<ul><li>Stack = Actual HC + Movement In + Movement Out + Hiring + Training + OJT</li><li><b>Line (right axis)</b> = A2 Attrition %</li></ul></div></div></div><canvas id="headcountChartA2"></canvas></div>
       </div>
+      <div class="section-title">🎯 HC vs PLAN &amp; QUEUE SL COMPLIANCE</div>
+      <div class="chart-card">
+        <div class="chart-card-header"><div><h3>HEADCOUNT: ACTUAL VS PLAN (BY FISCAL YEAR)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual vs Plan headcount by fiscal year, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li></ul></div></div></div>
+        <div style="height:260px;"><canvas id="hcPlanChart"></canvas></div>
+        <div class="queue-sl-caption" id="queueSlCaption">Over-plan queues still below 90% SL</div>
+        <div class="queue-sl-list" id="queueSlList"></div>
+      </div>
     </div>
 
     <!-- RIGHT -->
@@ -526,7 +540,7 @@ let savedNotes=[];
 let viewMode='weekly';
 const collapsedGroups=new Set();
 
-let forecastChartInstA1,forecastChartInstA2,headcountChartInstA1,headcountChartInstA2;
+let forecastChartInstA1,forecastChartInstA2,headcountChartInstA1,headcountChartInstA2,hcPlanChartInst;
 Chart.register(ChartDataLabels);
 
 /* ============ INIT ============ */
@@ -942,6 +956,42 @@ function renderHeadcountChart(){
   renderHeadcountChartSide('a2');
 }
 
+/* ============ HC vs PLAN BY FISCAL YEAR ============ */
+const FY_HC_PLAN=[
+  {fy:'FY25',actual:1800,plan:2050,sl:80},
+  {fy:'FY26',actual:1900,plan:2100,sl:86},
+  {fy:'FY27',actual:2150,plan:2300,sl:90},
+];
+const QUEUE_SL_BELOW_TARGET=[
+  {name:'Enterprise Pro/Core ID',sl:74.7,hc:20,plan:18},
+  {name:'LATAM Top Customers Spanish',sl:75.0,hc:18,plan:17},
+  {name:'LATAM AH Portuguese',sl:76.5,hc:10,plan:9},
+  {name:'Networking IND',sl:77.2,hc:19,plan:18},
+  {name:'Global CoreStore',sl:77.4,hc:18,plan:17},
+  {name:'KOR Storage Upsell Korean',sl:79.6,hc:19,plan:18},
+];
+
+function renderHcPlanChart(){
+  const ctx=document.getElementById('hcPlanChart').getContext('2d');if(hcPlanChartInst)hcPlanChartInst.destroy();const c=cc();
+  const labels=FY_HC_PLAN.map(d=>d.fy);
+  hcPlanChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {type:'bar',label:'Actual',data:FY_HC_PLAN.map(d=>d.actual),backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'bar',label:'Plan',data:FY_HC_PLAN.map(d=>d.plan),backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:false}},
+    {type:'line',label:'SL %',data:FY_HC_PLAN.map(d=>d.sl),borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v+'%'}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
+    x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
+    y:{position:'left',min:0,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'K':v}},
+    y1:{position:'right',min:0,max:100,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
+  }}});
+}
+
+function renderQueueSlList(){
+  document.getElementById('queueSlList').innerHTML=QUEUE_SL_BELOW_TARGET.map(q=>{
+    const delta=q.hc-q.plan;
+    return `<div class="queue-sl-row"><span class="queue-sl-name">${q.name}</span><span class="queue-sl-metrics"><b>SL ${q.sl.toFixed(1)}%</b> · HC ${q.hc} vs plan ${q.plan} (${delta>=0?'+':''}${delta})</span></div>`;
+  }).join('');
+}
+
 /* ============ AI-GENERATED INSIGHTS ============ */
 function renderInsights(derived){
   const all=idxAll();
@@ -1019,6 +1069,8 @@ function refreshOutputs(){
   renderKPIs(derived);
   renderForecastChart();
   renderHeadcountChart();
+  renderHcPlanChart();
+  renderQueueSlList();
   renderInsights(derived);
 }
 function recalculate(){
