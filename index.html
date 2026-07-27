@@ -171,6 +171,18 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .queue-sl-metrics{color:var(--text-secondary);white-space:nowrap;font-size:11px;}
 .queue-sl-metrics b{color:var(--red);font-weight:700;}
 
+/* PARAMETER TRENDS TAB */
+.trends-panel{flex:1;overflow-y:auto;padding:16px;}
+.trends-legend{display:flex;gap:18px;align-items:center;font-size:11px;color:var(--text-secondary);margin-bottom:6px;}
+.trends-legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.trend-group-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-section-header);color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.6px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;margin-top:16px;transition:background var(--transition);}
+.trend-group-header:hover{background:var(--bg-hover);}
+.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:12px 0 4px;}
+.trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;}
+.trend-card h4{font-size:10px;font-weight:600;color:var(--text-primary);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.3px;}
+.trend-card canvas{width:100% !important;max-height:100px;}
+.trend-subheading{grid-column:1/-1;font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+
 /* WEEKLY / QUARTERLY TABLE */
 .weekly-table-wrap{overflow-x:auto;max-height:420px;overflow-y:auto;}
 .weekly-table{border-collapse:collapse;font-size:10px;white-space:nowrap;}
@@ -382,6 +394,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 <div style="margin-top:132px;display:flex;flex-direction:column;height:calc(100vh - 132px);">
   <div class="tab-bar" style="position:relative;top:auto;">
     <button class="tab-btn active" onclick="switchTab('simulation',this)">⚡ Simulation</button>
+    <button class="tab-btn" onclick="switchTab('trends',this)">📈 Parameter Trends</button>
     <button class="tab-btn" onclick="switchTab('export',this)">📤 Export / Reports</button>
   </div>
 
@@ -440,6 +453,14 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
         <ul class="insights-list" id="aiInsights"></ul>
         <div class="insights-note">Auto-generated from the current scenario data (rule-based summary).</div>
       </div>
+    </div>
+  </div>
+
+  <!-- PARAMETER TRENDS TAB -->
+  <div id="tab-trends" class="tab-content">
+    <div class="trends-panel">
+      <div class="trends-legend"><span><span class="dot" style="background:var(--blue)"></span>A1 (Baseline)</span><span><span class="dot" style="background:var(--teal)"></span>A2 (Optimistic)</span></div>
+      <div id="trendsBody"></div>
     </div>
   </div>
 
@@ -539,6 +560,8 @@ let weeklyData = buildInitialWeeklyData();
 let savedNotes=[];
 let viewMode='weekly';
 const collapsedGroups=new Set();
+const collapsedTrendGroups=new Set();
+let trendChartInsts={};
 
 let forecastChartInstA1,forecastChartInstA2,headcountChartInstA1,headcountChartInstA2,hcPlanChartInst;
 Chart.register(ChartDataLabels);
@@ -671,7 +694,7 @@ function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('
 function updateThemeIcon(){document.getElementById('themeToggle').textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀':'🌙';}
 
 /* ============ TABS ============ */
-function switchTab(id,btn){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');if(id==='export')buildExportTab();}
+function switchTab(id,btn){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');if(id==='export')buildExportTab();if(id==='trends')renderTrendsTab();}
 
 /* ============ VIEW MODE (Weekly / Quarterly / Monthly) ============ */
 const VIEW_LABELS={weekly:{title:'13-WEEK',suffix:'(Weekly)',kpi:'Latest Week'},quarterly:{title:'QUARTERLY',suffix:'(Quarterly)',kpi:'Latest Quarter'},monthly:{title:'MONTHLY',suffix:'(Monthly)',kpi:'Latest Month'}};
@@ -832,6 +855,59 @@ function updateDerivedWeeklyCells(derived){
         if(el){ el.textContent = aggVals(derived[key][side],p.idx,rowDef.agg,rowDef.dec)+(rowDef.suffix||''); }
       });
     });
+  });
+}
+
+/* ============ PARAMETER TRENDS TAB ============ */
+const TREND_GROUP_META={contacts:'📞 CONTACTS',productivity:'📊 PRODUCTIVITY ASSUMPTIONS',headcount:'👥 HEADCOUNT ASSUMPTIONS'};
+function toggleTrendGroup(group){
+  if(collapsedTrendGroups.has(group)) collapsedTrendGroups.delete(group);
+  else collapsedTrendGroups.add(group);
+  renderTrendsTab();
+}
+function renderTrendsTab(){
+  const trendsBody=document.getElementById('trendsBody');
+  if(!trendsBody) return;
+  Object.values(trendChartInsts).forEach(inst=>{ if(inst) inst.destroy(); });
+  trendChartInsts={};
+
+  const derived=computeDerivedWeekly(weeklyData);
+  const periods=getPeriods();
+  const labels=periods.map(p=>p.label);
+
+  let html='';
+  Object.keys(TREND_GROUP_META).forEach(group=>{
+    const collapsed=collapsedTrendGroups.has(group);
+    const chevron=collapsed?'▶':'▼';
+    html+=`<div class="trend-group-header" onclick="toggleTrendGroup('${group}')"><span class="wk-chevron">${chevron}</span> ${TREND_GROUP_META[group]}</div>`;
+    if(collapsed) return;
+    html+='<div class="trend-grid">';
+    weeklyRowDefs.forEach(r=>{
+      if(r.header || !r.groups || r.groups[0]!==group) return;
+      if(r.key==='aux1') html+='<div class="trend-subheading">AUX States</div>';
+      html+=`<div class="trend-card"><h4>${r.label}</h4><canvas id="trendChart_${r.key}"></canvas></div>`;
+    });
+    html+='</div>';
+  });
+  trendsBody.innerHTML=html;
+
+  const c=cc();
+  weeklyRowDefs.forEach(r=>{
+    if(r.header || !r.groups) return;
+    const group=r.groups[0];
+    if(collapsedTrendGroups.has(group)) return;
+    const canvas=document.getElementById(`trendChart_${r.key}`);
+    if(!canvas) return;
+    const src=r.derived?derived[r.key]:weeklyData[r.key];
+    const a1D=periods.map(p=>aggVals(src.a1,p.idx,r.agg,r.dec));
+    const a2D=periods.map(p=>aggVals(src.a2,p.idx,r.agg,r.dec));
+    trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[
+      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:2,pointBackgroundColor:c.blue,datalabels:{display:false}},
+      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:2,pointBackgroundColor:c.teal,datalabels:{display:false}},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{
+      x:{grid:{display:false},ticks:{color:c.text,font:{size:7},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
+      y:{grid:{display:false},ticks:{color:c.text,font:{size:8}}}
+    }}});
   });
 }
 
@@ -1072,6 +1148,8 @@ function refreshOutputs(){
   renderHcPlanChart(derived);
   renderQueueSlList();
   renderInsights(derived);
+  const trendsTab=document.getElementById('tab-trends');
+  if(trendsTab && trendsTab.classList.contains('active')) renderTrendsTab();
 }
 function recalculate(){
   renderWeeklyTable();
