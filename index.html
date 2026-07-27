@@ -181,6 +181,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .trends-panel{flex:1;overflow-y:auto;padding:16px;}
 .trends-legend{display:flex;gap:18px;align-items:center;font-size:11px;color:var(--text-secondary);margin-bottom:6px;}
 .trends-legend .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+.trends-legend .dot.sq{border-radius:2px;}
 .trend-group-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-section-header);color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.6px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;margin-top:16px;transition:background var(--transition);}
 .trend-group-header:hover{background:var(--bg-hover);}
 .trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin:12px 0 4px;}
@@ -471,7 +472,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
   <!-- PARAMETER TRENDS TAB -->
   <div id="tab-trends" class="tab-content">
     <div class="trends-panel">
-      <div class="trends-legend"><span><span class="dot" style="background:var(--blue)"></span>A1 (Baseline)</span><span><span class="dot" style="background:var(--teal)"></span>A2 (Optimistic)</span><span><span class="dot" style="background:#a855f7"></span>Δ (A2−A1), right axis</span></div>
+      <div class="trends-legend"><span><span class="dot sq" style="background:var(--blue)"></span>A1 (Baseline) — bar</span><span><span class="dot sq" style="background:var(--teal)"></span>A2 (Optimistic) — bar</span><span><span class="dot" style="background:#a855f7"></span>Δ (A2−A1) — line, right axis</span></div>
       <div id="trendsBody"></div>
     </div>
   </div>
@@ -909,10 +910,10 @@ function renderTrendsTab(){
     const deltaD=a1D.map((v,i)=>+(a2D[i]-v).toFixed(dec));
     const fmtTrend=v=>v+(r.suffix||'');
     const fmtDelta=v=>(v>=0?'+':'')+v+(r.suffix||'');
-    trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'line',data:{labels,datasets:[
-      {label:'A1',data:a1D,borderColor:c.blue,backgroundColor:'transparent',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,yAxisID:'y',datalabels:{display:true,color:c.blue,align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
-      {label:'A2',data:a2D,borderColor:c.teal,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[4,3],pointRadius:3,pointBackgroundColor:c.teal,yAxisID:'y',datalabels:{display:true,color:c.teal,align:'bottom',font:{size:7,weight:'bold'},formatter:fmtTrend}},
-      {label:'Δ (A2-A1)',data:deltaD,borderColor:c.purple,backgroundColor:'transparent',tension:0.35,borderWidth:1.5,borderDash:[2,2],pointRadius:2,pointBackgroundColor:c.purple,yAxisID:'y1',datalabels:{display:true,color:c.purple,align:'top',font:{size:7,weight:'bold'},formatter:fmtDelta}},
+    trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[
+      {type:'bar',label:'A1',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
+      {type:'bar',label:'A2',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
+      {type:'line',label:'Δ (A2-A1)',data:deltaD,borderColor:c.purple,backgroundColor:'transparent',tension:0.35,borderWidth:1.5,borderDash:[2,2],pointRadius:2,pointBackgroundColor:c.purple,yAxisID:'y1',order:1,datalabels:{display:true,color:c.purple,align:'top',font:{size:7,weight:'bold'},formatter:fmtDelta}},
     ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{
       x:{grid:{display:false},ticks:{color:c.text,font:{size:10},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
       y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
