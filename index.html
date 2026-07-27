@@ -203,6 +203,10 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .weekly-table tr.wk-collapsible{cursor:pointer;user-select:none;}
 .weekly-table tr.wk-collapsible:hover td{background:var(--bg-hover);}
 .weekly-table .wk-chevron{display:inline-block;width:10px;font-size:8px;}
+.cell-delta{display:inline-block;font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:3px;white-space:nowrap;vertical-align:middle;}
+.cell-delta.cell-delta-pos{color:var(--green);background:var(--green-bg);}
+.cell-delta.cell-delta-neg{color:var(--red);background:var(--red-bg);}
+.cell-delta.cell-delta-zero{color:var(--text-muted);background:transparent;}
 .weekly-table tr.wk-group-top td{background:var(--bg-section-header);font-size:10px;}
 .weekly-table tr.wk-group-top td.wk-param{background:var(--bg-section-header);}
 .weekly-table tr.wk-group-sub td.wk-param{padding-left:22px;}
@@ -837,33 +841,25 @@ function renderWeeklyTable(){
       return `<tr class="wk-section-row ${levelClass} wk-collapsible" onclick="toggleGroup('${r.toggleGroup}')"><td class="wk-param"><span class="wk-chevron">${chevron}</span> ${r.label}</td><td colspan="${periods.length*2}"></td></tr>`;
     }
     if(hiddenByAncestor) return '';
+    const src=r.derived?derived[r.key]:weeklyData[r.key];
     let cells='';
-    periods.forEach((p,pi)=>{
-      ['a1','a2'].forEach(side=>{
-        if(r.derived){
-          const val=aggVals(derived[r.key][side],p.idx,r.agg,r.dec);
-          cells+=`<td id="wkd_${r.key}_${side}_${pi}">${val}${r.suffix||''}</td>`;
-        } else {
-          const val=aggVals(weeklyData[r.key][side],p.idx,r.agg,r.dec);
-          cells+=`<td>${val}${r.suffix||''}</td>`;
-        }
-      });
+    periods.forEach(p=>{
+      const a1Val=aggVals(src.a1,p.idx,r.agg,r.dec);
+      const a2Val=aggVals(src.a2,p.idx,r.agg,r.dec);
+      cells+=`<td>${a1Val}${r.suffix||''}</td>`;
+      cells+=`<td>${a2Val}${r.suffix||''}${renderDeltaBadge(a2Val-a1Val,r)}</td>`;
     });
     return `<tr><td class="wk-param">${r.label}</td>${cells}</tr>`;
   }).join('');
 }
 
-function updateDerivedWeeklyCells(derived){
-  const periods=getPeriods();
-  ['hcgap','sl'].forEach(key=>{
-    const rowDef=weeklyRowDefs.find(r=>r.key===key);
-    periods.forEach((p,pi)=>{
-      ['a1','a2'].forEach(side=>{
-        const el=document.getElementById(`wkd_${key}_${side}_${pi}`);
-        if(el){ el.textContent = aggVals(derived[key][side],p.idx,rowDef.agg,rowDef.dec)+(rowDef.suffix||''); }
-      });
-    });
-  });
+function renderDeltaBadge(diff,r){
+  const dec=r.dec||0;
+  const rounded=+diff.toFixed(dec);
+  const cls=rounded>0?'pos':rounded<0?'neg':'zero';
+  const sign=rounded>0?'+':'';
+  const suffix=r.suffix?' pp':'';
+  return ` <span class="cell-delta cell-delta-${cls}" title="A2 vs A1">Δ${sign}${rounded}${suffix}</span>`;
 }
 
 /* ============ PARAMETER TRENDS TAB ============ */
@@ -1210,7 +1206,6 @@ function exportCSV(){
 /* ============ RECALCULATE ============ */
 function refreshOutputs(){
   const derived=computeDerivedWeekly(weeklyData);
-  updateDerivedWeeklyCells(derived);
   renderKPIs(derived);
   renderForecastChart();
   renderHeadcountChart();
