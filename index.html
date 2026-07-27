@@ -254,6 +254,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
     <div class="seg-toggle" id="viewToggle">
       <button class="seg-btn active" data-mode="weekly" onclick="setViewMode('weekly')">Weekly</button>
       <button class="seg-btn" data-mode="quarterly" onclick="setViewMode('quarterly')">Quarterly</button>
+      <button class="seg-btn" data-mode="monthly" onclick="setViewMode('monthly')">Monthly</button>
     </div>
   </div>
   <div class="header-sep"></div>
@@ -655,29 +656,39 @@ function updateThemeIcon(){document.getElementById('themeToggle').textContent=do
 /* ============ TABS ============ */
 function switchTab(id,btn){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');if(id==='export')buildExportTab();}
 
-/* ============ VIEW MODE (Weekly / Quarterly) ============ */
+/* ============ VIEW MODE (Weekly / Quarterly / Monthly) ============ */
+const VIEW_LABELS={weekly:{title:'13-WEEK',suffix:'(Weekly)',kpi:'Latest Week'},quarterly:{title:'QUARTERLY',suffix:'(Quarterly)',kpi:'Latest Quarter'},monthly:{title:'MONTHLY',suffix:'(Monthly)',kpi:'Latest Month'}};
 function setViewMode(mode){
   viewMode=mode;
   document.querySelectorAll('#viewToggle .seg-btn').forEach(b=>b.classList.toggle('active', b.dataset.mode===mode));
-  document.getElementById('weeklyViewTitle').textContent = mode==='quarterly' ? '📅 QUARTERLY PARAMETER VIEW' : '📅 13-WEEK PARAMETER VIEW';
-  document.getElementById('forecastChartTitle').textContent = mode==='quarterly' ? 'FORECAST COMPARISON (Quarterly)' : 'FORECAST COMPARISON (Weekly)';
-  document.getElementById('auxChartTitle').textContent = mode==='quarterly' ? 'AUX STATES TREND (Quarterly)' : 'AUX STATES TREND (Weekly)';
-  document.getElementById('trainingChartTitle').textContent = mode==='quarterly' ? 'TRAINING RAMP (Quarterly)' : 'TRAINING RAMP (Weekly)';
+  const v=VIEW_LABELS[mode];
+  document.getElementById('weeklyViewTitle').textContent = `📅 ${v.title} PARAMETER VIEW`;
+  document.getElementById('forecastChartTitle').textContent = `FORECAST COMPARISON ${v.suffix}`;
+  document.getElementById('auxChartTitle').textContent = `AUX STATES TREND ${v.suffix}`;
+  document.getElementById('trainingChartTitle').textContent = `TRAINING RAMP ${v.suffix}`;
   const fiscalWeekGroup=document.getElementById('filterFiscalWeekGroup');
-  if(mode==='quarterly'){
+  if(mode==='weekly'){
+    fiscalWeekGroup.style.display='';
+  } else {
     fiscalWeekGroup.style.display='none';
     document.getElementById('filter_fiscalweek').value='';
-  } else {
-    fiscalWeekGroup.style.display='';
   }
   updateActiveFilterTags();
   recalculate();
 }
+function currentFiscalYear(){
+  return document.getElementById('filter_fiscalyear').value || 'FY26';
+}
+function pad2(n){return n<10?'0'+n:''+n;}
 function getPeriods(){
+  const fy=currentFiscalYear();
   if(viewMode==='quarterly'){
-    return [{label:'Q1',idx:[0,1,2]},{label:'Q2',idx:[3,4,5]},{label:'Q3',idx:[6,7,8]},{label:'Q4',idx:[9,10,11,12]}];
+    return [{label:`${fy}Q1`,idx:[0,1,2]},{label:`${fy}Q2`,idx:[3,4,5]},{label:`${fy}Q3`,idx:[6,7,8]},{label:`${fy}Q4`,idx:[9,10,11,12]}];
   }
-  return Array.from({length:WEEKS},(_,i)=>({label:'Week '+(i+1),idx:[i]}));
+  if(viewMode==='monthly'){
+    return [{label:`${fy}M01`,idx:[0,1,2,3]},{label:`${fy}M02`,idx:[4,5,6,7]},{label:`${fy}M03`,idx:[8,9,10,11,12]}];
+  }
+  return Array.from({length:WEEKS},(_,i)=>({label:`${fy}W${pad2(i+1)}`,idx:[i]}));
 }
 
 /* ============ HELPERS ============ */
@@ -825,7 +836,7 @@ function renderKPIs(derived){
     {title:'Utilization',v1:util1.toFixed(1)+'%',v2:util2.toFixed(1)+'%',delta:util2-util1,pct:null,suffix:' pp'},
     {title:'Productivity (C/HC)',v1:prod1.toFixed(1),v2:prod2.toFixed(1),delta:prod2-prod1,pct:pct(prod1,prod2)},
   ];
-  const periodLabel = viewMode==='quarterly' ? `Latest Quarter: ${latest.label}` : `Latest Week: ${latest.label}`;
+  const periodLabel = `${VIEW_LABELS[viewMode].kpi}: ${latest.label}`;
   const badge=document.getElementById('kpiPeriodBadge');
   if(badge) badge.textContent=periodLabel;
   document.getElementById('kpi-row').innerHTML=kpis.map(k=>{
