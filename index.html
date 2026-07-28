@@ -75,34 +75,34 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .theme-toggle{width:32px;height:32px;border-radius:50%;background:var(--bg-input);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all var(--transition);}
 .theme-toggle:hover{border-color:var(--accent);}
 
-/* ===== FILTER BAR ===== */
-.filter-bar{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 16px;
+/* ===== FILTER PANEL (LEFT) ===== */
+.filter-panel{
+  width:230px;min-width:230px;
+  display:flex;flex-direction:column;gap:12px;
+  padding:16px 14px;
   background:var(--filter-bg);
-  border-bottom:1px solid var(--border);
-  position:fixed;top:50px;left:0;right:0;z-index:999;
+  border-right:1px solid var(--border);
+  overflow-y:auto;
   transition:background var(--transition),border var(--transition);
-  flex-wrap:wrap;
-  min-height:46px;
 }
-.filter-bar .filter-label{
+.filter-panel-title{
   font-size:11px;font-weight:700;color:var(--accent);
   display:flex;align-items:center;gap:4px;
   white-space:nowrap;letter-spacing:0.3px;
 }
 .filter-group{
-  display:flex;flex-direction:column;gap:1px;
+  display:flex;flex-direction:column;gap:4px;
 }
 .filter-group label{
   font-size:9px;font-weight:600;color:var(--text-muted);
   text-transform:uppercase;letter-spacing:0.5px;
 }
 .filter-group select{
+  width:100%;
   background:var(--bg-input);color:var(--text-primary);
   border:1px solid var(--border);border-radius:var(--radius-sm);
-  padding:4px 24px 4px 8px;font-size:11px;font-family:var(--font);
-  cursor:pointer;outline:none;min-width:130px;
+  padding:6px 24px 6px 8px;font-size:11px;font-family:var(--font);
+  cursor:pointer;outline:none;
   transition:all var(--transition);
   -webkit-appearance:none;-moz-appearance:none;appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");
@@ -110,18 +110,19 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 }
 .filter-group select:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-glow);}
 .filter-group select:hover{border-color:var(--accent);}
-.filter-sep{width:1px;height:30px;background:var(--border);margin:0 2px;}
+.filter-divider{height:1px;background:var(--border);margin:2px 0;}
 .filter-reset-btn{
-  padding:5px 12px;font-size:11px;font-family:var(--font);font-weight:600;
+  padding:7px 12px;font-size:11px;font-family:var(--font);font-weight:600;
   border:1px solid var(--red);border-radius:var(--radius-sm);
   background:var(--red-bg);color:var(--red);cursor:pointer;
   transition:all var(--transition);white-space:nowrap;
-  display:flex;align-items:center;gap:4px;
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  width:100%;
 }
 .filter-reset-btn:hover{background:var(--red);color:white;}
 
 /* LAYOUT */
-.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg-panel);padding:0 16px;min-height:36px;position:fixed;top:96px;left:0;right:0;z-index:998;transition:background var(--transition);}
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--bg-panel);padding:0 16px;min-height:36px;transition:background var(--transition);}
 .tab-btn{padding:8px 20px;font-size:12px;font-family:var(--font);font-weight:500;border:none;background:transparent;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;transition:all var(--transition);}
 .tab-btn:hover{color:var(--text-primary);}
 .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
@@ -258,8 +259,9 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .filter-tag .tag-remove{cursor:pointer;font-size:11px;font-weight:700;margin-left:2px;opacity:0.7;}
 .filter-tag .tag-remove:hover{opacity:1;}
 
-@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}.chart-row.three{grid-template-columns:1fr}.chart-row.two{grid-template-columns:1fr}.filter-bar{flex-wrap:wrap;}}
+@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}.chart-row.three{grid-template-columns:1fr}.chart-row.two{grid-template-columns:1fr}}
 @media(max-width:900px){.right-panel{display:none}.kpi-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.filter-panel{display:none}}
 </style>
 </head>
 <body>
@@ -288,123 +290,129 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       <button class="seg-btn" data-mode="monthly" onclick="setViewMode('monthly')">Monthly</button>
     </div>
   </div>
-  <div class="header-sep"></div>
-  <button class="header-btn" onclick="resetAll()">🔄 Reset</button>
   <div class="header-spacer"></div>
   <div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme">☀</div>
   <div class="theme-toggle" style="font-size:18px" title="More">⋮</div>
 </header>
 
-<!-- ===== FILTER BAR ===== -->
-<div class="filter-bar" id="filterBar">
-  <div class="filter-label">🔍 Filters</div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <label>Fiscal Year</label>
-    <select id="filter_fiscalyear">
-      <option value="">All Fiscal Years</option>
-      <option>FY24</option>
-      <option>FY25</option>
-      <option>FY26</option>
-      <option>FY27</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Fiscal Quarter</label>
-    <select id="filter_fiscalquarter">
-      <option value="">All Quarters</option>
-      <option>Q1</option>
-      <option>Q2</option>
-      <option>Q3</option>
-      <option>Q4</option>
-    </select>
-  </div>
-  <div class="filter-group" id="filterFiscalWeekGroup">
-    <label>Fiscal Week</label>
-    <select id="filter_fiscalweek">
-      <option value="">All Weeks</option>
-      <option>Week 1</option>
-      <option>Week 2</option>
-      <option>Week 3</option>
-      <option>Week 4</option>
-      <option>Week 5</option>
-      <option>Week 6</option>
-      <option>Week 7</option>
-      <option>Week 8</option>
-      <option>Week 9</option>
-      <option>Week 10</option>
-      <option>Week 11</option>
-      <option>Week 12</option>
-      <option>Week 13</option>
-    </select>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <label>Region</label>
-    <select id="filter_region">
-      <option value="">All Regions</option>
-      <option>Americas</option>
-      <option>EMEA</option>
-      <option>APJ</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Sub Region</label>
-    <select id="filter_subregion">
-      <option value="">All Sub Regions</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Country</label>
-    <select id="filter_country">
-      <option value="">All Countries</option>
-    </select>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <label>Channel</label>
-    <select id="filter_channel">
-      <option value="">All Channels</option>
-      <option>Voice</option>
-      <option>Chat</option>
-      <option>Email</option>
-      <option>Social Media</option>
-      <option>Self-Service</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Offering</label>
-    <select id="filter_offering">
-      <option value="">All Offerings</option>
-      <option>ProSupport</option>
-      <option>ProSupport Plus</option>
-      <option>Basic Support</option>
-      <option>Premium Support</option>
-      <option>Managed Services</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Combined Queue Name</label>
-    <select id="filter_queue">
-      <option value="">All Queues</option>
-      <option>Enterprise_T1_Voice</option>
-      <option>Enterprise_T2_Voice</option>
-      <option>SMB_T1_Chat</option>
-      <option>SMB_T2_Voice</option>
-      <option>Consumer_T1_Voice</option>
-      <option>Consumer_T1_Chat</option>
-      <option>Premium_Escalation</option>
-      <option>Managed_Svc_Queue</option>
-    </select>
-  </div>
-  <div class="filter-sep"></div>
-  <button class="filter-reset-btn" onclick="resetFilters()">✕ Clear Filters</button>
-  <div class="filter-active-tags" id="activeFilterTags"></div>
-</div>
+<!-- MAIN LAYOUT: left filter panel + tab area -->
+<div style="margin-top:50px;height:calc(100vh - 50px);display:flex;">
+  <!-- ===== FILTER PANEL (LEFT) ===== -->
+  <div class="filter-panel" id="filterPanel">
+    <div class="filter-panel-title">🔍 Filters</div>
 
-<!-- TAB BAR + MAIN -->
-<div style="margin-top:132px;display:flex;flex-direction:column;height:calc(100vh - 132px);">
-  <div class="tab-bar" style="position:relative;top:auto;">
+    <div class="filter-group">
+      <label>Fiscal Year</label>
+      <select id="filter_fiscalyear">
+        <option value="">All Fiscal Years</option>
+        <option>FY24</option>
+        <option>FY25</option>
+        <option>FY26</option>
+        <option>FY27</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Fiscal Quarter</label>
+      <select id="filter_fiscalquarter">
+        <option value="">All Quarters</option>
+        <option>Q1</option>
+        <option>Q2</option>
+        <option>Q3</option>
+        <option>Q4</option>
+      </select>
+    </div>
+    <div class="filter-group" id="filterFiscalWeekGroup">
+      <label>Fiscal Week</label>
+      <select id="filter_fiscalweek">
+        <option value="">All Weeks</option>
+        <option>Week 1</option>
+        <option>Week 2</option>
+        <option>Week 3</option>
+        <option>Week 4</option>
+        <option>Week 5</option>
+        <option>Week 6</option>
+        <option>Week 7</option>
+        <option>Week 8</option>
+        <option>Week 9</option>
+        <option>Week 10</option>
+        <option>Week 11</option>
+        <option>Week 12</option>
+        <option>Week 13</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="filter-group">
+      <label>Region</label>
+      <select id="filter_region">
+        <option value="">All Regions</option>
+        <option>Americas</option>
+        <option>EMEA</option>
+        <option>APJ</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Sub Region</label>
+      <select id="filter_subregion">
+        <option value="">All Sub Regions</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Country</label>
+      <select id="filter_country">
+        <option value="">All Countries</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <div class="filter-group">
+      <label>Channel</label>
+      <select id="filter_channel">
+        <option value="">All Channels</option>
+        <option>Voice</option>
+        <option>Chat</option>
+        <option>Email</option>
+        <option>Social Media</option>
+        <option>Self-Service</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Offering</label>
+      <select id="filter_offering">
+        <option value="">All Offerings</option>
+        <option>ProSupport</option>
+        <option>ProSupport Plus</option>
+        <option>Basic Support</option>
+        <option>Premium Support</option>
+        <option>Managed Services</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Combined Queue Name</label>
+      <select id="filter_queue">
+        <option value="">All Queues</option>
+        <option>Enterprise_T1_Voice</option>
+        <option>Enterprise_T2_Voice</option>
+        <option>SMB_T1_Chat</option>
+        <option>SMB_T2_Voice</option>
+        <option>Consumer_T1_Voice</option>
+        <option>Consumer_T1_Chat</option>
+        <option>Premium_Escalation</option>
+        <option>Managed_Svc_Queue</option>
+      </select>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <button class="filter-reset-btn" onclick="resetFilters()">✕ Clear Filters</button>
+    <div class="filter-active-tags" id="activeFilterTags"></div>
+  </div>
+
+  <!-- TAB BAR + MAIN -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('simulation',this)">⚡ Simulation</button>
     <button class="tab-btn" onclick="switchTab('trends',this)">📈 Parameter Trends</button>
     <button class="tab-btn" onclick="switchTab('export',this)">📤 Export / Reports</button>
@@ -484,6 +492,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       <div class="export-card"><h2>📋 Full Parameter Comparison (13-Week Horizon)</h2><table class="data-table" id="exportTable"><thead><tr><th>#</th><th>Parameter</th><th>A1 (Baseline)</th><th>A2 (Optimistic)</th><th>Δ (A2-A1)</th></tr></thead><tbody></tbody></table></div>
       <div class="export-card"><h2>📤 Export Options</h2><p style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;">Download current scenario data or generate a printable report.</p><button class="export-btn csv" onclick="exportCSV()">📥 Export to CSV</button><button class="export-btn pdf" onclick="window.print()">🖨 Export to PDF</button></div>
     </div>
+  </div>
   </div>
 </div>
 <div class="toast-container" id="toastContainer"></div>
@@ -696,12 +705,6 @@ function resetFilters(){
   showToast('✕ All filters cleared — Dashboard reset');
 }
 
-function resetAll(){
-  weeklyData = buildInitialWeeklyData();
-  recalculate();
-  showToast('🔄 Scenario reset to defaults');
-}
-
 /* ============ THEME ============ */
 function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);updateThemeIcon();recalculate();showToast(n==='dark'?'🌙 Dark mode':'☀ Light mode');}
 function updateThemeIcon(){document.getElementById('themeToggle').textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀':'🌙';}
@@ -859,7 +862,7 @@ function renderDeltaBadge(diff,r){
   const rounded=+diff.toFixed(dec);
   const cls=rounded>0?'pos':rounded<0?'neg':'zero';
   const sign=rounded>0?'+':'';
-  const suffix=r.suffix?' pp':'';
+  const suffix=r.suffix||'';
   return ` <span class="cell-delta cell-delta-${cls}" title="A2 vs A1">Δ${sign}${rounded}${suffix}</span>`;
 }
 
@@ -937,9 +940,9 @@ function renderKPIs(derived){
   const kpis=[
     {title:'Forecast (Handled)',v1:fmt(handled1),v2:fmt(handled2),delta:handled2-handled1,pct:pct(handled1,handled2)},
     {title:'Required Headcount',v1:fmt(reqHC1),v2:fmt(reqHC2),delta:reqHC2-reqHC1,pct:pct(reqHC1,reqHC2)},
-    {title:'SLA (AR%)',v1:ar1.toFixed(1)+'%',v2:ar2.toFixed(1)+'%',delta:ar2-ar1,pct:null,suffix:' pp'},
-    {title:'Occupancy',v1:occ1.toFixed(1)+'%',v2:occ2.toFixed(1)+'%',delta:occ2-occ1,pct:null,suffix:' pp'},
-    {title:'Utilization',v1:util1.toFixed(1)+'%',v2:util2.toFixed(1)+'%',delta:util2-util1,pct:null,suffix:' pp'},
+    {title:'SLA (AR%)',v1:ar1.toFixed(1)+'%',v2:ar2.toFixed(1)+'%',delta:ar2-ar1,pct:null,suffix:'%'},
+    {title:'Occupancy',v1:occ1.toFixed(1)+'%',v2:occ2.toFixed(1)+'%',delta:occ2-occ1,pct:null,suffix:'%'},
+    {title:'Utilization',v1:util1.toFixed(1)+'%',v2:util2.toFixed(1)+'%',delta:util2-util1,pct:null,suffix:'%'},
     {title:'Productivity (C/HC)',v1:prod1.toFixed(1),v2:prod2.toFixed(1),delta:prod2-prod1,pct:pct(prod1,prod2)},
   ];
   const periodLabel = `${VIEW_LABELS[viewMode].kpi}: ${latest.label}`;
