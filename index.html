@@ -151,8 +151,11 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .chart-row.three{grid-template-columns:repeat(3,1fr);}
 .chart-row.two{grid-template-columns:repeat(2,1fr);}
 .chart-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);transition:all var(--transition);position:relative;}
-.chart-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;}
+.chart-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:nowrap;}
 .chart-card-header h3{font-size:12px;font-weight:700;color:var(--text-primary);}
+.chart-card-title{font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
+.chart-card-controls{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.chart-canvas-wrap{position:relative;width:100%;}
 .chart-card-header .chart-subtitle{font-size:10px;color:var(--text-muted);margin-top:2px;}
 .chart-info-btn{width:22px;height:22px;border-radius:50%;background:var(--accent-glow);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:700;font-style:italic;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all var(--transition);position:relative;flex-shrink:0;margin-left:8px;}
 .chart-info-btn:hover{background:var(--accent);color:white;}
@@ -438,16 +441,72 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
         </div>
       </div>
       <div class="section-title">⚙ Analytics</div>
+
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 handled volume trend per period, with a trend line on the right axis.<ul><li><b>Blue line</b> = A1 volume</li><li><b>Dashed teal line</b> = A2 volume</li><li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><div style="height:420px;width:100%;position:relative;"><canvas id="forecastChart"></canvas></div></div>
+        <div class="chart-card-header">
+          <h3 class="chart-card-title" id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3>
+          <div class="chart-card-controls">
+            <div class="seg-toggle" id="forecastMetricToggle">
+              <button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button>
+              <button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button>
+            </div>
+            <div class="chart-info-btn">i
+              <div class="chart-info-tooltip">
+                <div class="tip-title">💡 About This Chart</div>
+                A1 vs A2 handled volume trend per period, with a trend line on the right axis.
+                <ul>
+                  <li><b>Blue line</b> = A1 volume</li>
+                  <li><b>Dashed teal line</b> = A2 volume</li>
+                  <li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap" style="height:400px;"><canvas id="forecastChart"></canvas></div>
       </div>
+
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 trend for the selected headcount stage, from the Parameter View.<ul><li>Solid line = A1, dashed line = A2</li><li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><div style="height:420px;width:100%;position:relative;"><canvas id="headcountChart"></canvas></div></div>
+        <div class="chart-card-header">
+          <h3 class="chart-card-title" id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3>
+          <div class="chart-card-controls">
+            <select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select>
+            <div class="chart-info-btn">i
+              <div class="chart-info-tooltip">
+                <div class="tip-title">💡 About This Chart</div>
+                A1 vs A2 trend for the selected headcount stage, from the Parameter View.
+                <ul>
+                  <li>Solid line = A1, dashed line = A2</li>
+                  <li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li>
+                  <li><b>Line (right axis)</b> = Attrition %</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap" style="height:400px;"><canvas id="headcountChart"></canvas></div>
       </div>
+
       <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li><li>Click any bar to drill into queue-level SL detail, insights and recommended action for that period</li></ul></div></div></div>
-        <div style="height:320px;width:100%;position:relative;"><canvas id="hcPlanChart"></canvas></div>
+        <div class="chart-card-header">
+          <h3 class="chart-card-title" id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3>
+          <div class="chart-card-controls">
+            <div class="chart-info-btn">i
+              <div class="chart-info-tooltip">
+                <div class="tip-title">💡 About This Chart</div>
+                Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.
+                <ul>
+                  <li><b>Blue bar</b> = Actual HC</li>
+                  <li><b>Orange bar</b> = Plan HC</li>
+                  <li><b>Purple line</b> = SL %</li>
+                  <li>Click any bar to drill into queue-level SL detail, insights and recommended action for that period</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chart-canvas-wrap" style="height:300px;"><canvas id="hcPlanChart"></canvas></div>
         <div class="queue-sl-caption" id="queueSlCaption">👆 Click a bar above to see queue-level SL detail for that period</div>
         <div class="queue-sl-list" id="queueSlList"></div>
         <div class="queue-sl-insight" id="queueSlInsight"></div>
@@ -982,8 +1041,8 @@ function renderForecastChart(){
   forecastChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
     {label:'A1 Volume',data:vol1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:endsOnly,color:c.blue,align:'top',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}},
     {label:'A2 Volume',data:vol2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:endsOnly,color:c.teal,align:'bottom',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}},
-    {label:`A1 ${metricLabel}`,data:metric1D,borderColor:color1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:color1,order:1,datalabels:{display:endsOnly,color:color1,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {label:`A2 ${metricLabel}`,data:metric2D,borderColor:color2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:color2,order:1,datalabels:{display:endsOnly,color:color2,align:'bottom',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {label:`A1 ${metricLabel}`,data:metric1D,borderColor:color1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:color1,order:1,datalabels:{display:false}},
+    {label:`A2 ${metricLabel}`,data:metric2D,borderColor:color2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:color2,order:1,datalabels:{display:false}},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
@@ -1034,8 +1093,8 @@ function renderHeadcountChart(){
 
   const attr1D=periods.map(p=>aggVals(weeklyData.attrition.a1,p.idx,'avg',1));
   const attr2D=periods.map(p=>aggVals(weeklyData.attrition.a2,p.idx,'avg',1));
-  const attrLine1={label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:endsOnly,color:c.amber,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
-  const attrLine2={label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:endsOnly,color:c.orange,align:'bottom',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
+  const attrLine1={label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:false}};
+  const attrLine2={label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:false}};
 
   headcountChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[stageLine1,stageLine2,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:16}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
