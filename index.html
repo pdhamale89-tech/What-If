@@ -184,12 +184,12 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .trends-legend .dot.sq{border-radius:2px;}
 .trend-group-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg-section-header);color:var(--accent);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:0.6px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;margin-top:16px;transition:background var(--transition);}
 .trend-group-header:hover{background:var(--bg-hover);}
-.trend-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:16px;margin:12px 0 4px;}
-.trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
-.trend-card h4{font-size:12px;font-weight:700;color:var(--text-primary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.3px;}
-.trend-card .trend-canvas-wrap{height:200px;}
+.trend-grid{display:flex;flex-direction:column;gap:20px;margin:12px 0 4px;}
+.trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
+.trend-card h4{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.3px;}
+.trend-card .trend-canvas-wrap{height:380px;}
 .trend-card canvas{width:100% !important;}
-.trend-subheading{grid-column:1/-1;font-size:9px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+.trend-subheading{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
 
 /* WEEKLY / QUARTERLY TABLE */
 .weekly-table-wrap{overflow-x:auto;max-height:420px;overflow-y:auto;}
@@ -911,13 +911,13 @@ function renderTrendsTab(){
     const fmtTrend=v=>v+(r.suffix||'');
     const fmtDelta=v=>(v>=0?'+':'')+v+(r.suffix||'');
     trendChartInsts[r.key]=new Chart(canvas.getContext('2d'),{type:'bar',data:{labels,datasets:[
-      {type:'bar',label:'A1',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
-      {type:'bar',label:'A2',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:7,weight:'bold'},formatter:fmtTrend}},
-      {type:'line',label:'Δ (A2-A1)',data:deltaD,borderColor:c.purple,backgroundColor:'transparent',tension:0.35,borderWidth:1.5,borderDash:[2,2],pointRadius:2,pointBackgroundColor:c.purple,yAxisID:'y1',order:1,datalabels:{display:true,color:c.purple,align:'top',font:{size:7,weight:'bold'},formatter:fmtDelta}},
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{
-      x:{grid:{display:false},ticks:{color:c.text,font:{size:10},maxRotation:0,autoSkip:true,autoSkipPadding:6}},
-      y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
-      y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:8}}}
+      {type:'bar',label:'A1',data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:10,weight:'bold'},formatter:fmtTrend}},
+      {type:'bar',label:'A2',data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:10,weight:'bold'},formatter:fmtTrend}},
+      {type:'line',label:'Δ (A2-A1)',data:deltaD,borderColor:c.purple,backgroundColor:'transparent',tension:0.35,borderWidth:2,borderDash:[3,3],pointRadius:3,pointBackgroundColor:c.purple,yAxisID:'y1',order:1,datalabels:{display:true,color:c.purple,align:'top',font:{size:10,weight:'bold'},formatter:fmtDelta}},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:11},boxWidth:20}},datalabels:{display:false}},scales:{
+      x:{grid:{display:false},ticks:{color:c.text,font:{size:12},maxRotation:0,autoSkip:true,autoSkipPadding:8}},
+      y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:12}}},
+      y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:11}}}
     }}});
   });
 }
