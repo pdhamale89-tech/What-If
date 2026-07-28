@@ -132,7 +132,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .tab-content.active{display:flex;flex:1;overflow:hidden;}
 
 /* CENTER */
-.center-panel{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
+.center-panel{flex:1;min-width:0;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px;}
 .section-title{font-size:14px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
 .section-title .badge{font-size:9px;padding:2px 8px;border-radius:10px;background:var(--accent);color:white;font-weight:600;}
 .section-title .badge.badge-period{background:var(--blue);}
@@ -190,7 +190,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .trend-grid{display:flex;flex-direction:column;gap:20px;margin:12px 0 4px;}
 .trend-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;}
 .trend-card h4{font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.3px;}
-.trend-card .trend-canvas-wrap{height:380px;}
+.trend-card .trend-canvas-wrap{height:380px;width:100%;position:relative;}
 .trend-card canvas{width:100% !important;}
 .trend-subheading{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:6px;border-bottom:1px solid var(--border);padding-bottom:4px;}
 
@@ -413,7 +413,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
   </div>
 
   <!-- TAB BAR + MAIN -->
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;">
   <div class="tab-bar">
     <button class="tab-btn active" onclick="switchTab('simulation',this)">⚡ Simulation</button>
     <button class="tab-btn" onclick="switchTab('trends',this)">📈 Parameter Trends</button>
@@ -439,13 +439,15 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       </div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 handled volume trend per period, with a trend line on the right axis.<ul><li><b>Blue line</b> = A1 volume</li><li><b>Dashed teal line</b> = A2 volume</li><li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><div style="height:420px;"><canvas id="forecastChart"></canvas></div></div>
+        <div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 handled volume trend per period, with a trend line on the right axis.<ul><li><b>Blue line</b> = A1 volume</li><li><b>Dashed teal line</b> = A2 volume</li><li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><div style="height:420px;width:100%;position:relative;"><canvas id="forecastChart"></canvas></div></div>
+      </div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 trend for the selected headcount stage, from the Parameter View.<ul><li>Solid line = A1, dashed line = A2</li><li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><div style="height:420px;"><canvas id="headcountChart"></canvas></div></div>
+        <div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 trend for the selected headcount stage, from the Parameter View.<ul><li>Solid line = A1, dashed line = A2</li><li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><div style="height:420px;width:100%;position:relative;"><canvas id="headcountChart"></canvas></div></div>
+      </div>
       <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
         <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li><li>Click any bar to drill into queue-level SL detail, insights and recommended action for that period</li></ul></div></div></div>
-        <div style="height:320px;"><canvas id="hcPlanChart"></canvas></div>
+        <div style="height:320px;width:100%;position:relative;"><canvas id="hcPlanChart"></canvas></div>
         <div class="queue-sl-caption" id="queueSlCaption">👆 Click a bar above to see queue-level SL detail for that period</div>
         <div class="queue-sl-list" id="queueSlList"></div>
         <div class="queue-sl-insight" id="queueSlInsight"></div>
