@@ -69,6 +69,8 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .seg-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;}
 .seg-btn{padding:4px 10px;font-size:11px;font-family:var(--font);font-weight:500;border:none;background:var(--bg-input);color:var(--text-secondary);cursor:pointer;transition:all var(--transition);}
 .seg-btn.active{background:var(--accent);color:#fff;font-weight:600;}
+.chart-select{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 22px 4px 8px;font-size:11px;font-family:var(--font);cursor:pointer;outline:none;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.chart-select:focus{border-color:var(--accent);}
 .header-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:all var(--transition);}
 .header-btn:hover{border-color:var(--accent);color:var(--accent);}
 .header-spacer{flex:1;}
@@ -159,7 +161,7 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .chart-info-tooltip ul{margin:4px 0 0 14px;color:var(--text-secondary);font-size:10px;}
 .chart-info-tooltip ul li{margin-bottom:2px;}
 .chart-info-btn:hover .chart-info-tooltip{display:block;}
-.chart-card canvas{width:100% !important;max-height:220px;}
+.chart-card canvas{width:100% !important;}
 .data-table{width:100%;border-collapse:collapse;font-size:11px;}
 .data-table th{text-align:left;padding:6px 8px;font-weight:600;color:var(--text-muted);border-bottom:1px solid var(--border);font-size:10px;text-transform:uppercase;letter-spacing:0.3px;}
 .data-table td{padding:5px 8px;border-bottom:1px solid var(--border-light);color:var(--text-primary);}
@@ -437,13 +439,13 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
       </div>
       <div class="section-title">⚙ Analytics</div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 handled volume trend per period, with a trend line on the right axis.<ul><li><b>Blue line</b> = A1 volume</li><li><b>Dashed teal line</b> = A2 volume</li><li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><div style="height:320px;"><canvas id="forecastChart"></canvas></div></div>
+        <div class="chart-card-header"><div><h3 id="forecastChartTitle">FORECAST COMPARISON (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><div class="seg-toggle" id="forecastMetricToggle"><button class="seg-btn active" data-metric="ar" onclick="setForecastMetric('ar')">AR%</button><button class="seg-btn" data-metric="fcmod" onclick="setForecastMetric('fcmod')">Fcst Mod%</button></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 handled volume trend per period, with a trend line on the right axis.<ul><li><b>Blue line</b> = A1 volume</li><li><b>Dashed teal line</b> = A2 volume</li><li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li></ul></div></div></div><div style="height:420px;"><canvas id="forecastChart"></canvas></div></div>
       <div class="chart-card">
-        <div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 headcount stage trends per period, from the Parameter View.<ul><li>Solid lines = A1, dashed lines = A2</li><li>Stages: Actual HC, Movement In, Movement Out, Hiring, Training, OJT</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><div style="height:320px;"><canvas id="headcountChart"></canvas></div></div>
+        <div class="chart-card-header"><div><h3 id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3></div><div style="display:flex;align-items:center;gap:6px;"><select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>A1 vs A2 trend for the selected headcount stage, from the Parameter View.<ul><li>Solid line = A1, dashed line = A2</li><li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li><li><b>Line (right axis)</b> = Attrition %</li></ul></div></div></div><div style="height:420px;"><canvas id="headcountChart"></canvas></div></div>
       <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
         <div class="chart-card-header"><div><h3 id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3></div><div class="chart-info-btn">i<div class="chart-info-tooltip"><div class="tip-title">💡 About This Chart</div>Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.<ul><li><b>Blue bar</b> = Actual HC</li><li><b>Orange bar</b> = Plan HC</li><li><b>Purple line</b> = SL %</li><li>Click any bar to drill into queue-level SL detail, insights and recommended action for that period</li></ul></div></div></div>
-        <div style="height:260px;"><canvas id="hcPlanChart"></canvas></div>
+        <div style="height:320px;"><canvas id="hcPlanChart"></canvas></div>
         <div class="queue-sl-caption" id="queueSlCaption">👆 Click a bar above to see queue-level SL detail for that period</div>
         <div class="queue-sl-list" id="queueSlList"></div>
         <div class="queue-sl-insight" id="queueSlInsight"></div>
@@ -754,7 +756,7 @@ function aggVals(arr, idxs, type, dec){
   else r=vals.reduce((a,b)=>a+b,0)/vals.length;
   return +r.toFixed(dec===undefined?1:dec);
 }
-function cc(){const d=document.documentElement.getAttribute('data-theme')==='dark';return{grid:d?'rgba(30,58,95,0.4)':'rgba(0,0,0,0.06)',text:d?'#94a3b8':'#64748b',green:'#22c55e',red:'#ef4444',blue:'#3b82f6',teal:'#06b6d4',amber:'#f59e0b',orange:'#fb923c',purple:'#a855f7',pink:'#ec4899'};}
+function cc(){const d=document.documentElement.getAttribute('data-theme')==='dark';return{grid:d?'rgba(30,58,95,0.4)':'rgba(0,0,0,0.06)',text:d?'#94a3b8':'#64748b',green:'#22c55e',red:'#ef4444',blue:'#3b82f6',teal:'#06b6d4',amber:'#f59e0b',orange:'#fb923c',purple:'#a855f7',pink:'#ec4899',cardBg:d?'#1a2332':'#ffffff'};}
 
 /* ============ DERIVED PER-WEEK METRICS ============ */
 function computeDerivedWeekly(wd){
@@ -1001,29 +1003,40 @@ const HEADCOUNT_STAGES=[
   {key:'ojt',label:'OJT',agg:'avg',dec:0},
 ];
 
+let headcountStage='hc';
+function setHeadcountStage(key){
+  headcountStage=key;
+  renderHeadcountChart();
+}
+function populateHeadcountStageSelect(){
+  const sel=document.getElementById('headcountStageSelect');
+  if(!sel || sel.dataset.populated) return;
+  sel.innerHTML=HEADCOUNT_STAGES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
+  sel.value=headcountStage;
+  sel.dataset.populated='true';
+}
+
 function renderHeadcountChart(){
+  populateHeadcountStageSelect();
   const ctx=document.getElementById('headcountChart').getContext('2d');if(headcountChartInst)headcountChartInst.destroy();const c=cc();
   const periods=getPeriods();
   const labels=periods.map(p=>p.label);
-  const stageColors=[c.blue,c.green,c.red,c.teal,c.purple,c.pink];
+  const stage=HEADCOUNT_STAGES.find(s=>s.key===headcountStage)||HEADCOUNT_STAGES[0];
 
-  const lineDatasets=[];
-  HEADCOUNT_STAGES.forEach((s,i)=>{
-    const a1D=periods.map(p=>aggVals(weeklyData[s.key].a1,p.idx,s.agg,s.dec));
-    const a2D=periods.map(p=>aggVals(weeklyData[s.key].a2,p.idx,s.agg,s.dec));
-    lineDatasets.push({label:`${s.label} (A1)`,data:a1D,borderColor:stageColors[i],backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:2,pointBackgroundColor:stageColors[i],order:2,datalabels:{display:false}});
-    lineDatasets.push({label:`${s.label} (A2)`,data:a2D,borderColor:stageColors[i],backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:2,pointBackgroundColor:stageColors[i],order:2,datalabels:{display:false}});
-  });
+  const a1D=periods.map(p=>aggVals(weeklyData[stage.key].a1,p.idx,stage.agg,stage.dec));
+  const a2D=periods.map(p=>aggVals(weeklyData[stage.key].a2,p.idx,stage.agg,stage.dec));
+  const stageLine1={label:`${stage.label} (A1)`,data:a1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:true,color:c.blue,align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}};
+  const stageLine2={label:`${stage.label} (A2)`,data:a2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:true,color:c.teal,align:'bottom',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}};
 
   const attr1D=periods.map(p=>aggVals(weeklyData.attrition.a1,p.idx,'avg',1));
   const attr2D=periods.map(p=>aggVals(weeklyData.attrition.a2,p.idx,'avg',1));
   const attrLine1={label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
   const attrLine2={label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
 
-  headcountChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[...lineDatasets,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:8},boxWidth:12}},datalabels:{display:false}},scales:{
-    x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
-    y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9}}},
-    y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
+  headcountChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[stageLine1,stageLine2,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:16}},datalabels:{display:false}},scales:{
+    x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
+    y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
+    y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:10},callback:v=>v+'%'}}
   }}});
 }
 
@@ -1048,8 +1061,8 @@ function renderHcPlanChart(derived){
   hcPlanSl=periods.map(p=>aggVals(derived.sl.a1,p.idx,'avg',1));
   resetHcPlanDetail();
   hcPlanChartInst=new Chart(ctx,{type:'bar',data:{labels:hcPlanLabels,datasets:[
-    {type:'bar',label:'Actual',data:hcPlanActual,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
-    {type:'bar',label:'Plan',data:hcPlanPlanArr,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:true,color:c.text,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
+    {type:'bar',label:'Actual',data:hcPlanActual,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:true,color:c.blue,anchor:'end',align:'top',offset:4,font:{size:10,weight:'bold'},textStrokeColor:c.cardBg,textStrokeWidth:3,formatter:v=>fmt(v)}},
+    {type:'bar',label:'Plan',data:hcPlanPlanArr,backgroundColor:c.orange,yAxisID:'y',order:2,datalabels:{display:true,color:c.orange,anchor:'end',align:'top',offset:4,font:{size:10,weight:'bold'},textStrokeColor:c.cardBg,textStrokeWidth:3,formatter:v=>fmt(v)}},
     {type:'line',label:'SL %',data:hcPlanSl,borderColor:c.purple,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:4,pointBackgroundColor:c.purple,order:1,datalabels:{display:true,color:c.purple,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
   ]},options:{responsive:true,maintainAspectRatio:false,onClick:(evt,elements,chart)=>{
       const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
