@@ -976,12 +976,13 @@ function renderForecastChart(){
     metricLabel='AR%'; color1=c.amber; color2=c.orange; metricMin=0; metricMax=100;
   }
 
+  const endsOnly=ctx=>ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1;
   forecastChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[
-    {label:'A1 Volume',data:vol1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:true,color:c.blue,align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
-    {label:'A2 Volume',data:vol2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:true,color:c.teal,align:'bottom',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}},
-    {label:`A1 ${metricLabel}`,data:metric1D,borderColor:color1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:color1,order:1,datalabels:{display:true,color:color1,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-    {label:`A2 ${metricLabel}`,data:metric2D,borderColor:color2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:color2,order:1,datalabels:{display:true,color:color2,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
-  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},datalabels:{display:false}},scales:{
+    {label:'A1 Volume',data:vol1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:endsOnly,color:c.blue,align:'top',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}},
+    {label:'A2 Volume',data:vol2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:endsOnly,color:c.teal,align:'bottom',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}},
+    {label:`A1 ${metricLabel}`,data:metric1D,borderColor:color1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:color1,order:1,datalabels:{display:endsOnly,color:color1,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+    {label:`A2 ${metricLabel}`,data:metric2D,borderColor:color2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:color2,order:1,datalabels:{display:endsOnly,color:color2,align:'bottom',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:20}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:9}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>(v/1000).toFixed(0)+'K'}},
     y1:{position:'right',min:metricMin,max:metricMax,grid:{display:false},ticks:{color:c.text,font:{size:9},callback:v=>v+'%'}}
@@ -1025,15 +1026,16 @@ function renderHeadcountChart(){
 
   const a1D=periods.map(p=>aggVals(weeklyData[stage.key].a1,p.idx,stage.agg,stage.dec));
   const a2D=periods.map(p=>aggVals(weeklyData[stage.key].a2,p.idx,stage.agg,stage.dec));
-  const stageLine1={label:`${stage.label} (A1)`,data:a1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:true,color:c.blue,align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}};
-  const stageLine2={label:`${stage.label} (A2)`,data:a2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:true,color:c.teal,align:'bottom',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}};
+  const endsOnly=ctx=>ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1;
+  const stageLine1={label:`${stage.label} (A1)`,data:a1D,borderColor:c.blue,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.blue,order:2,datalabels:{display:endsOnly,color:c.blue,align:'top',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}};
+  const stageLine2={label:`${stage.label} (A2)`,data:a2D,borderColor:c.teal,backgroundColor:'transparent',yAxisID:'y',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.teal,order:2,datalabels:{display:endsOnly,color:c.teal,align:'bottom',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}};
 
   const attr1D=periods.map(p=>aggVals(weeklyData.attrition.a1,p.idx,'avg',1));
   const attr2D=periods.map(p=>aggVals(weeklyData.attrition.a2,p.idx,'avg',1));
-  const attrLine1={label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:true,color:c.amber,align:'top',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
-  const attrLine2={label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:true,color:c.orange,align:'bottom',anchor:'end',font:{size:8,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
+  const attrLine1={label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:endsOnly,color:c.amber,align:'top',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
+  const attrLine2={label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:endsOnly,color:c.orange,align:'bottom',anchor:'end',font:{size:9,weight:'bold'},formatter:v=>v.toFixed(1)+'%'}};
 
-  headcountChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[stageLine1,stageLine2,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:16}},datalabels:{display:false}},scales:{
+  headcountChartInst=new Chart(ctx,{type:'line',data:{labels,datasets:[stageLine1,stageLine2,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:16}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:10},callback:v=>v+'%'}}
