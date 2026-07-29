@@ -71,6 +71,9 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .seg-btn.active{background:var(--accent);color:#fff;font-weight:600;}
 .chart-select{background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 22px 4px 8px;font-size:11px;font-family:var(--font);cursor:pointer;outline:none;-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
 .chart-select:focus{border-color:var(--accent);}
+.chart-select-multi{-webkit-appearance:none;-moz-appearance:none;appearance:none;background-image:none;min-width:150px;padding:2px;}
+.chart-select-multi option{padding:3px 6px;border-radius:3px;}
+.chart-select-multi option:checked{background:var(--accent);color:#fff;}
 .header-btn{display:flex;align-items:center;gap:4px;padding:5px 10px;font-size:11px;font-family:var(--font);border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text-primary);cursor:pointer;white-space:nowrap;transition:all var(--transition);}
 .header-btn:hover{border-color:var(--accent);color:var(--accent);}
 .header-spacer{flex:1;}
@@ -470,15 +473,15 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
         <div class="chart-card-header">
           <h3 class="chart-card-title" id="headcountChartTitle">HEADCOUNT DETAILS (Weekly)</h3>
           <div class="chart-card-controls">
-            <select class="chart-select" id="headcountStageSelect" onchange="setHeadcountStage(this.value)"></select>
+            <select class="chart-select chart-select-multi" id="headcountTrendSelect" multiple size="4" onchange="onHeadcountTrendChange()"></select>
             <div class="chart-info-btn">i
               <div class="chart-info-tooltip">
                 <div class="tip-title">💡 About This Chart</div>
-                A1 vs A2 trend for the selected headcount stage, from the Parameter View.
+                Actual HC, Movement In and Movement Out always show as bars (A1 solid, A2 lighter), from the Parameter View.
                 <ul>
-                  <li>Solid line = A1, dashed line = A2</li>
-                  <li>Use the dropdown to switch between Actual HC, Movement In, Movement Out, Hiring, Training and OJT</li>
-                  <li><b>Line (right axis)</b> = Attrition %</li>
+                  <li><b>Bars (left axis)</b> = Actual HC, Movement In, Movement Out</li>
+                  <li><b>Lines (right axis)</b> = Attrition%, Hiring, Training, OJT — pick one or more from the list</li>
+                  <li>Ctrl/Cmd-click to select multiple; each selection adds its own A1/A2 trend line</li>
                 </ul>
               </div>
             </div>
@@ -817,7 +820,7 @@ function aggVals(arr, idxs, type, dec){
   else r=vals.reduce((a,b)=>a+b,0)/vals.length;
   return +r.toFixed(dec===undefined?1:dec);
 }
-function cc(){const d=document.documentElement.getAttribute('data-theme')==='dark';return{grid:d?'rgba(30,58,95,0.4)':'rgba(0,0,0,0.06)',text:d?'#94a3b8':'#64748b',green:'#22c55e',red:'#ef4444',blue:'#3b82f6',teal:'#06b6d4',amber:'#f59e0b',orange:'#fb923c',purple:'#a855f7',pink:'#ec4899',cardBg:d?'#1a2332':'#ffffff'};}
+function cc(){const d=document.documentElement.getAttribute('data-theme')==='dark';return{grid:d?'rgba(30,58,95,0.4)':'rgba(0,0,0,0.06)',text:d?'#94a3b8':'#64748b',green:'#22c55e',red:'#ef4444',blue:'#3b82f6',teal:'#06b6d4',amber:'#f59e0b',orange:'#fb923c',purple:'#a855f7',pink:'#ec4899',cyan:'#22d3ee',indigo:'#6366f1',rose:'#f43f5e',cardBg:d?'#1a2332':'#ffffff'};}
 
 /* ============ DERIVED PER-WEEK METRICS ============ */
 function computeDerivedWeekly(wd){
@@ -1056,50 +1059,69 @@ function hexToRgba(hex,alpha){
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-const HEADCOUNT_STAGES=[
-  {key:'hc',label:'Actual HC',agg:'last',dec:0},
-  {key:'movin',label:'Movement In',agg:'sum',dec:0},
-  {key:'movout',label:'Movement Out',agg:'sum',dec:0},
-  {key:'hiring',label:'Hiring',agg:'sum',dec:0},
-  {key:'training',label:'Training',agg:'avg',dec:0},
-  {key:'ojt',label:'OJT',agg:'avg',dec:0},
+const HEADCOUNT_BAR_STAGES=[
+  {key:'hc',label:'Actual HC',agg:'last',dec:0,axis:'y',color:'blue'},
+  {key:'movin',label:'Movement In',agg:'sum',dec:0,axis:'yFlow',color:'green'},
+  {key:'movout',label:'Movement Out',agg:'sum',dec:0,axis:'yFlow',color:'red'},
+];
+const HEADCOUNT_TREND_METRICS=[
+  {key:'attrition',label:'Attrition%',agg:'avg',dec:1,suffix:'%',color1:'amber',color2:'orange'},
+  {key:'hiring',label:'Hiring',agg:'sum',dec:0,suffix:'',color1:'teal',color2:'cyan'},
+  {key:'training',label:'Training',agg:'avg',dec:0,suffix:'',color1:'purple',color2:'pink'},
+  {key:'ojt',label:'OJT',agg:'avg',dec:0,suffix:'',color1:'indigo',color2:'rose'},
 ];
 
-let headcountStage='hc';
-function setHeadcountStage(key){
-  headcountStage=key;
-  renderHeadcountChart();
-}
-function populateHeadcountStageSelect(){
-  const sel=document.getElementById('headcountStageSelect');
+let headcountTrendKeys=['attrition'];
+function populateHeadcountTrendSelect(){
+  const sel=document.getElementById('headcountTrendSelect');
   if(!sel || sel.dataset.populated) return;
-  sel.innerHTML=HEADCOUNT_STAGES.map(s=>`<option value="${s.key}">${s.label}</option>`).join('');
-  sel.value=headcountStage;
+  sel.innerHTML=HEADCOUNT_TREND_METRICS.map(m=>`<option value="${m.key}"${headcountTrendKeys.includes(m.key)?' selected':''}>${m.label}</option>`).join('');
   sel.dataset.populated='true';
+}
+function onHeadcountTrendChange(){
+  const sel=document.getElementById('headcountTrendSelect');
+  let keys=Array.from(sel.options).filter(o=>o.selected).map(o=>o.value);
+  if(keys.length===0){
+    keys=['attrition'];
+    const fallback=Array.from(sel.options).find(o=>o.value==='attrition');
+    if(fallback) fallback.selected=true;
+  }
+  headcountTrendKeys=keys;
+  renderHeadcountChart();
 }
 
 function renderHeadcountChart(){
-  populateHeadcountStageSelect();
+  populateHeadcountTrendSelect();
   const ctx=document.getElementById('headcountChart').getContext('2d');if(headcountChartInst)headcountChartInst.destroy();const c=cc();
   const periods=getPeriods();
   const labels=periods.map(p=>p.label);
-  const stage=HEADCOUNT_STAGES.find(s=>s.key===headcountStage)||HEADCOUNT_STAGES[0];
-
-  const a1D=periods.map(p=>aggVals(weeklyData[stage.key].a1,p.idx,stage.agg,stage.dec));
-  const a2D=periods.map(p=>aggVals(weeklyData[stage.key].a2,p.idx,stage.agg,stage.dec));
   const endsOnly=ctx=>ctx.dataIndex===0||ctx.dataIndex===ctx.dataset.data.length-1;
-  const stageBar1={type:'bar',label:`${stage.label} (A1)`,data:a1D,backgroundColor:c.blue,yAxisID:'y',order:2,datalabels:{display:endsOnly,color:c.blue,anchor:'end',align:'top',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}};
-  const stageBar2={type:'bar',label:`${stage.label} (A2)`,data:a2D,backgroundColor:c.teal,yAxisID:'y',order:2,datalabels:{display:endsOnly,color:c.teal,anchor:'end',align:'top',font:{size:10,weight:'bold'},formatter:v=>fmt(v)}};
 
-  const attr1D=periods.map(p=>aggVals(weeklyData.attrition.a1,p.idx,'avg',1));
-  const attr2D=periods.map(p=>aggVals(weeklyData.attrition.a2,p.idx,'avg',1));
-  const attrLine1={type:'line',label:'Attrition% (A1)',data:attr1D,borderColor:c.amber,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:c.amber,order:1,datalabels:{display:false}};
-  const attrLine2={type:'line',label:'Attrition% (A2)',data:attr2D,borderColor:c.orange,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:c.orange,order:1,datalabels:{display:false}};
+  const barDatasets=[];
+  HEADCOUNT_BAR_STAGES.forEach(s=>{
+    const a1D=periods.map(p=>aggVals(weeklyData[s.key].a1,p.idx,s.agg,s.dec));
+    const a2D=periods.map(p=>aggVals(weeklyData[s.key].a2,p.idx,s.agg,s.dec));
+    const col=c[s.color];
+    barDatasets.push({type:'bar',label:`${s.label} (A1)`,data:a1D,backgroundColor:col,yAxisID:s.axis,order:2,datalabels:{display:endsOnly,color:col,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
+    barDatasets.push({type:'bar',label:`${s.label} (A2)`,data:a2D,backgroundColor:hexToRgba(col,0.5),yAxisID:s.axis,order:2,datalabels:{display:endsOnly,color:col,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
+  });
 
-  headcountChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[stageBar1,stageBar2,attrLine1,attrLine2]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:16}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
+  const lineDatasets=[];
+  headcountTrendKeys.forEach(key=>{
+    const m=HEADCOUNT_TREND_METRICS.find(x=>x.key===key);
+    if(!m) return;
+    const a1D=periods.map(p=>aggVals(weeklyData[m.key].a1,p.idx,m.agg,m.dec));
+    const a2D=periods.map(p=>aggVals(weeklyData[m.key].a2,p.idx,m.agg,m.dec));
+    const col1=c[m.color1], col2=c[m.color2];
+    lineDatasets.push({type:'line',label:`${m.label} (A1)`,data:a1D,borderColor:col1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:col1,order:1,datalabels:{display:endsOnly,color:col1,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
+    lineDatasets.push({type:'line',label:`${m.label} (A2)`,data:a2D,borderColor:col2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:col2,order:1,datalabels:{display:endsOnly,color:col2,anchor:'end',align:'bottom',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
+  });
+
+  headcountChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,...lineDatasets]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:14}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
-    y1:{position:'right',min:0,grid:{display:false},ticks:{color:c.text,font:{size:10},callback:v=>v+'%'}}
+    yFlow:{display:false},
+    y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:10}}}
   }}});
 }
 
