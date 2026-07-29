@@ -493,10 +493,9 @@ Actual HC, Movement In and Movement Out always show as a stacked bar per period,
         <div class="chart-canvas-wrap" style="height:400px;"><canvas id="headcountChart"></canvas></div>
       </div>
 
-      <div class="section-title">🎯 Headcount Impact on SL</div>
       <div class="chart-card">
         <div class="chart-card-header">
-          <h3 class="chart-card-title" id="hcPlanChartTitle">HEADCOUNT: ACTUAL VS PLAN (Weekly)</h3>
+          <h3 class="chart-card-title" id="hcPlanChartTitle">Headcount Impact on SL (Weekly)</h3>
           <div class="chart-card-controls">
             <div class="chart-info-btn">i
               <div class="chart-info-tooltip">
@@ -807,7 +806,7 @@ function setViewMode(mode){
   document.getElementById('weeklyViewTitle').textContent = `📅 ${v.title} PARAMETER VIEW`;
   document.getElementById('forecastChartTitle').textContent = `FORECAST COMPARISON ${v.suffix}`;
   document.getElementById('headcountChartTitle').textContent = `HEADCOUNT DETAILS ${v.suffix}`;
-  document.getElementById('hcPlanChartTitle').textContent = `HEADCOUNT: ACTUAL VS PLAN ${v.suffix}`;
+  document.getElementById('hcPlanChartTitle').textContent = `Headcount Impact on SL ${v.suffix}`;
   const fiscalWeekGroup=document.getElementById('filterFiscalWeekGroup');
   if(mode==='weekly'){
     fiscalWeekGroup.style.display='';
