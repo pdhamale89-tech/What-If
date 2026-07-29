@@ -479,9 +479,10 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
             <div class="chart-info-btn">i
               <div class="chart-info-tooltip">
                 <div class="tip-title">💡 About This Chart</div>
-                Actual HC, Movement In and Movement Out always show as bars (A1 solid, A2 lighter), from the Parameter View.
+Actual HC, Movement In and Movement Out always show as a stacked bar per period, from the Parameter View.
                 <ul>
-                  <li><b>Bars (left axis)</b> = Actual HC, Movement In, Movement Out</li>
+                  <li><b>Stacked bars (left axis)</b> = Actual HC (teal) + Movement In (amber) + Movement Out (purple)</li>
+                  <li>One stack per scenario — A1 solid colors, A2 lighter shades, side by side</li>
                   <li><b>Lines (right axis)</b> = Attrition%, Hiring, Training, OJT — pick one or more from the list</li>
                   <li>Ctrl/Cmd-click to select multiple; each selection adds its own A1/A2 trend line</li>
                 </ul>
@@ -1083,15 +1084,15 @@ function hexToRgba(hex,alpha){
 }
 
 const HEADCOUNT_BAR_STAGES=[
-  {key:'hc',label:'Actual HC',agg:'last',dec:0,axis:'y',color:'blue'},
-  {key:'movin',label:'Movement In',agg:'sum',dec:0,axis:'yFlow',color:'green'},
-  {key:'movout',label:'Movement Out',agg:'sum',dec:0,axis:'yFlow',color:'red'},
+  {key:'hc',label:'Actual HC',agg:'last',dec:0,color:'teal'},
+  {key:'movin',label:'Movement In',agg:'sum',dec:0,color:'amber'},
+  {key:'movout',label:'Movement Out',agg:'sum',dec:0,color:'purple'},
 ];
 const HEADCOUNT_TREND_METRICS=[
-  {key:'attrition',label:'Attrition%',agg:'avg',dec:1,suffix:'%',color1:'amber',color2:'orange'},
-  {key:'hiring',label:'Hiring',agg:'sum',dec:0,suffix:'',color1:'teal',color2:'cyan'},
-  {key:'training',label:'Training',agg:'avg',dec:0,suffix:'',color1:'purple',color2:'pink'},
-  {key:'ojt',label:'OJT',agg:'avg',dec:0,suffix:'',color1:'indigo',color2:'rose'},
+  {key:'attrition',label:'Attrition%',agg:'avg',dec:1,suffix:'%',color1:'red',color2:'orange'},
+  {key:'hiring',label:'Hiring',agg:'sum',dec:0,suffix:'',color1:'green',color2:'cyan'},
+  {key:'training',label:'Training',agg:'avg',dec:0,suffix:'',color1:'blue',color2:'indigo'},
+  {key:'ojt',label:'OJT',agg:'avg',dec:0,suffix:'',color1:'pink',color2:'rose'},
 ];
 
 let headcountTrendKeys=['attrition'];
@@ -1125,8 +1126,8 @@ function renderHeadcountChart(){
     const a1D=periods.map(p=>aggVals(weeklyData[s.key].a1,p.idx,s.agg,s.dec));
     const a2D=periods.map(p=>aggVals(weeklyData[s.key].a2,p.idx,s.agg,s.dec));
     const col=c[s.color];
-    barDatasets.push({type:'bar',label:`${s.label} (A1)`,data:a1D,backgroundColor:col,yAxisID:s.axis,order:2,datalabels:{display:endsOnly,color:col,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
-    barDatasets.push({type:'bar',label:`${s.label} (A2)`,data:a2D,backgroundColor:hexToRgba(col,0.5),yAxisID:s.axis,order:2,datalabels:{display:endsOnly,color:col,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
+    barDatasets.push({type:'bar',label:`${s.label} (A1)`,data:a1D,backgroundColor:col,stack:'A1',yAxisID:'y',order:2,datalabels:{display:v=>v.dataset.data[v.dataIndex]>0,color:'#fff',anchor:'center',align:'center',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
+    barDatasets.push({type:'bar',label:`${s.label} (A2)`,data:a2D,backgroundColor:hexToRgba(col,0.55),stack:'A2',yAxisID:'y',order:2,datalabels:{display:v=>v.dataset.data[v.dataIndex]>0,color:'#fff',anchor:'center',align:'center',font:{size:9,weight:'bold'},formatter:v=>fmt(v)}});
   });
 
   const lineDatasets=[];
@@ -1141,9 +1142,8 @@ function renderHeadcountChart(){
   });
 
   headcountChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,...lineDatasets]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:14}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
-    x:{grid:{display:false},ticks:{color:c.text,font:{size:10}}},
-    y:{position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
-    yFlow:{display:false},
+    x:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:10}}},
+    y:{stacked:true,position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:10}}}
   }}});
 }
