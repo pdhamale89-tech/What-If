@@ -483,8 +483,9 @@ Actual HC, Movement In and Movement Out always show as a stacked bar per period,
                 <ul>
                   <li><b>Stacked bars (left axis)</b> = Actual HC (teal) + Movement In (amber) + Movement Out (purple)</li>
                   <li>One stack per scenario — A1 solid colors, A2 lighter shades, side by side</li>
-                  <li><b>Lines (right axis)</b> = Attrition%, Hiring, Training, OJT — pick one or more from the list</li>
-                  <li>Ctrl/Cmd-click to select multiple; each selection adds its own A1/A2 trend line</li>
+                  <li><b>Hiring, Training, OJT (left axis)</b> = whole-number trend lines, same axis as the bars</li>
+                  <li><b>Attrition% (right axis)</b> = percentage trend line</li>
+                  <li>Ctrl/Cmd-click to select multiple from the list; each selection adds its own A1/A2 trend line</li>
                 </ul>
               </div>
             </div>
@@ -1088,10 +1089,10 @@ const HEADCOUNT_BAR_STAGES=[
   {key:'movout',label:'Movement Out',agg:'sum',dec:0,color:'purple'},
 ];
 const HEADCOUNT_TREND_METRICS=[
-  {key:'attrition',label:'Attrition%',agg:'avg',dec:1,suffix:'%',color1:'red',color2:'orange'},
-  {key:'hiring',label:'Hiring',agg:'sum',dec:0,suffix:'',color1:'green',color2:'cyan'},
-  {key:'training',label:'Training',agg:'avg',dec:0,suffix:'',color1:'blue',color2:'indigo'},
-  {key:'ojt',label:'OJT',agg:'avg',dec:0,suffix:'',color1:'pink',color2:'rose'},
+  {key:'attrition',label:'Attrition%',agg:'avg',dec:1,suffix:'%',color1:'red',color2:'orange',axis:'y1'},
+  {key:'hiring',label:'Hiring',agg:'sum',dec:0,suffix:'',color1:'green',color2:'cyan',axis:'y'},
+  {key:'training',label:'Training',agg:'avg',dec:0,suffix:'',color1:'blue',color2:'indigo',axis:'y'},
+  {key:'ojt',label:'OJT',agg:'avg',dec:0,suffix:'',color1:'pink',color2:'rose',axis:'y'},
 ];
 
 let headcountTrendKeys=['attrition'];
@@ -1136,14 +1137,14 @@ function renderHeadcountChart(){
     const a1D=periods.map(p=>aggVals(weeklyData[m.key].a1,p.idx,m.agg,m.dec));
     const a2D=periods.map(p=>aggVals(weeklyData[m.key].a2,p.idx,m.agg,m.dec));
     const col1=c[m.color1], col2=c[m.color2];
-    lineDatasets.push({type:'line',label:`${m.label} (A1)`,data:a1D,borderColor:col1,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:col1,order:1,datalabels:{display:endsOnly,color:col1,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
-    lineDatasets.push({type:'line',label:`${m.label} (A2)`,data:a2D,borderColor:col2,backgroundColor:'transparent',yAxisID:'y1',tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:col2,order:1,datalabels:{display:endsOnly,color:col2,anchor:'end',align:'bottom',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
+    lineDatasets.push({type:'line',label:`${m.label} (A1)`,data:a1D,borderColor:col1,backgroundColor:'transparent',yAxisID:m.axis,tension:0.35,borderWidth:2,pointRadius:3,pointBackgroundColor:col1,order:1,datalabels:{display:endsOnly,color:col1,anchor:'end',align:'top',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
+    lineDatasets.push({type:'line',label:`${m.label} (A2)`,data:a2D,borderColor:col2,backgroundColor:'transparent',yAxisID:m.axis,tension:0.35,borderWidth:2,borderDash:[5,5],pointRadius:3,pointBackgroundColor:col2,order:1,datalabels:{display:endsOnly,color:col2,anchor:'end',align:'bottom',font:{size:9,weight:'bold'},formatter:v=>v+(m.suffix||'')}});
   });
 
   headcountChartInst=new Chart(ctx,{type:'bar',data:{labels,datasets:[...barDatasets,...lineDatasets]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',align:'center',labels:{color:c.text,font:{size:9},boxWidth:14}},tooltip:{mode:'index',intersect:false},datalabels:{display:false}},scales:{
     x:{stacked:true,grid:{display:false},ticks:{color:c.text,font:{size:10}}},
     y:{stacked:true,position:'left',grid:{display:false},ticks:{color:c.text,font:{size:10}}},
-    y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:10}}}
+    y1:{position:'right',grid:{display:false},ticks:{color:c.text,font:{size:10},callback:v=>v+'%'}}
   }}});
 }
 
