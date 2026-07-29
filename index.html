@@ -139,13 +139,13 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .section-title{font-size:14px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;gap:8px;margin-bottom:4px;}
 .section-title .badge{font-size:9px;padding:2px 8px;border-radius:10px;background:var(--accent);color:white;font-weight:600;}
 .section-title .badge.badge-period{background:var(--blue);}
-.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;}
-.kpi-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;border:1px solid var(--border);transition:all var(--transition);cursor:default;}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:12px;}
+.kpi-card{min-width:0;background:var(--bg-card);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden;border:1px solid var(--border);transition:all var(--transition);cursor:default;}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kpi-accent-line);}
 .kpi-card:hover{transform:translateY(-3px);box-shadow:var(--shadow);}
-.kpi-card .kpi-title{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;}
-.kpi-values{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;}
-.kpi-val{font-size:18px;font-weight:700;color:var(--text-primary);line-height:1;}
+.kpi-card .kpi-title{font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-values{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;gap:6px;min-width:0;}
+.kpi-val{font-size:18px;font-weight:700;color:var(--text-primary);line-height:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .kpi-val small{font-size:9px;color:var(--text-muted);font-weight:400;display:block;margin-top:2px;}
 .kpi-delta{font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px;display:inline-flex;align-items:center;gap:3px;}
 .kpi-delta.pos{color:var(--green);background:var(--green-bg);}
@@ -224,7 +224,11 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .weekly-table tbody tr:hover td.wk-param{background:var(--bg-hover);}
 
 /* RIGHT PANEL */
-.right-panel{width:310px;min-width:310px;background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;transition:background var(--transition),border var(--transition);}
+.right-panel{width:310px;min-width:310px;background:var(--bg-panel);border-left:1px solid var(--border);overflow-y:auto;overflow-x:hidden;transition:width 0.28s ease,min-width 0.28s ease,background var(--transition),border var(--transition);}
+.right-panel.collapsed{width:0;min-width:0;border-left:none;}
+.right-panel-inner{width:310px;}
+.panel-toggle{width:16px;min-width:16px;flex-shrink:0;background:var(--bg-panel);border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:12px;transition:background var(--transition),color var(--transition);user-select:none;}
+.panel-toggle:hover{background:var(--bg-hover);color:var(--accent);}
 .right-section{padding:14px;border-bottom:1px solid var(--border);}
 .right-section-title{font-size:12px;font-weight:700;color:var(--text-primary);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
 .notes-wrap{display:flex;flex-direction:column;gap:8px;}
@@ -267,8 +271,6 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .filter-tag .tag-remove{cursor:pointer;font-size:11px;font-weight:700;margin-left:2px;opacity:0.7;}
 .filter-tag .tag-remove:hover{opacity:1;}
 
-@media(max-width:1200px){.kpi-row{grid-template-columns:repeat(3,1fr)}.chart-row.three{grid-template-columns:1fr}.chart-row.two{grid-template-columns:1fr}}
-@media(max-width:900px){.right-panel{display:none}.kpi-row{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.filter-panel{display:none}}
 </style>
 </head>
@@ -517,24 +519,27 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
     </div>
 
     <!-- RIGHT -->
-    <div class="right-panel">
-      <div class="right-section">
-        <div class="right-section-title">📝 SCENARIO NOTES</div>
-        <div class="notes-wrap">
-          <textarea class="notes-textarea" id="notesArea" placeholder="Type your scenario notes here...">Optimistic scenario with forecast reduction, improved AHT and absenteeism, lower attrition and hiring.</textarea>
-          <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
+    <div class="panel-toggle" id="rightPanelToggle" onclick="toggleRightPanel()" title="Collapse panel">›</div>
+    <div class="right-panel" id="rightPanel">
+      <div class="right-panel-inner">
+        <div class="right-section">
+          <div class="right-section-title">📝 SCENARIO NOTES</div>
+          <div class="notes-wrap">
+            <textarea class="notes-textarea" id="notesArea" placeholder="Type your scenario notes here...">Optimistic scenario with forecast reduction, improved AHT and absenteeism, lower attrition and hiring.</textarea>
+            <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
+          </div>
         </div>
-      </div>
-      <div class="right-section">
-        <div class="notes-summary-section">
-          <div class="ns-title">📋 NOTES SUMMARY</div>
-          <table class="notes-history-table"><thead><tr><th>Previous SCENARIO NOTES</th><th>Last Updated</th><th>Updated By</th></tr></thead><tbody id="notesHistoryBody"><tr><td colspan="3" class="no-notes">No notes saved yet. Write a note above and click Save.</td></tr></tbody></table>
+        <div class="right-section">
+          <div class="notes-summary-section">
+            <div class="ns-title">📋 NOTES SUMMARY</div>
+            <table class="notes-history-table"><thead><tr><th>Previous SCENARIO NOTES</th><th>Last Updated</th><th>Updated By</th></tr></thead><tbody id="notesHistoryBody"><tr><td colspan="3" class="no-notes">No notes saved yet. Write a note above and click Save.</td></tr></tbody></table>
+          </div>
         </div>
-      </div>
-      <div class="right-section">
-        <div class="right-section-title">🤖 AI-GENERATED INSIGHTS</div>
-        <ul class="insights-list" id="aiInsights"></ul>
-        <div class="insights-note">Auto-generated from the current scenario data (rule-based summary).</div>
+        <div class="right-section">
+          <div class="right-section-title">🤖 AI-GENERATED INSIGHTS</div>
+          <ul class="insights-list" id="aiInsights"></ul>
+          <div class="insights-note">Auto-generated from the current scenario data (rule-based summary).</div>
+        </div>
       </div>
     </div>
   </div>
@@ -769,6 +774,24 @@ function resetFilters(){
 
 /* ============ THEME ============ */
 function toggleTheme(){const h=document.documentElement;const n=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',n);localStorage.setItem('theme',n);updateThemeIcon();recalculate();showToast(n==='dark'?'🌙 Dark mode':'☀ Light mode');}
+
+/* ============ RIGHT PANEL COLLAPSE ============ */
+function toggleRightPanel(){
+  const panel=document.getElementById('rightPanel');
+  const btn=document.getElementById('rightPanelToggle');
+  const collapsed=panel.classList.toggle('collapsed');
+  btn.textContent=collapsed?'‹':'›';
+  btn.title=collapsed?'Expand panel':'Collapse panel';
+  setTimeout(resizeAllCharts,320);
+}
+function resizeAllCharts(){
+  [forecastChartInst,headcountChartInst,hcPlanChartInst].forEach(inst=>{ if(inst) inst.resize(); });
+  Object.values(trendChartInsts).forEach(inst=>{ if(inst) inst.resize(); });
+}
+window.addEventListener('resize',()=>{
+  clearTimeout(window._wiResizeTimer);
+  window._wiResizeTimer=setTimeout(resizeAllCharts,150);
+});
 function updateThemeIcon(){document.getElementById('themeToggle').textContent=document.documentElement.getAttribute('data-theme')==='dark'?'☀':'🌙';}
 
 /* ============ TABS ============ */
