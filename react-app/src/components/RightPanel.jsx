@@ -78,9 +78,14 @@ export default function RightPanel() {
           </div>
           <div className="right-section">
             <div className="right-section-title">🤖 AI-GENERATED INSIGHTS</div>
-            <ul className="insights-list">
-              {insights.map((t, i) => <li key={i}>{t}</li>)}
-            </ul>
+            <div className="insights-blur-wrap">
+              <ul className="insights-list insights-list-blur">
+                {insights.map((t, i) => <li key={i}>{t}</li>)}
+              </ul>
+              <div className="coming-soon-overlay">
+                <span className="coming-soon-badge">🚀 Coming Soon</span>
+              </div>
+            </div>
             <div className="insights-note">Auto-generated from the current scenario data (rule-based summary).</div>
           </div>
         </div>
