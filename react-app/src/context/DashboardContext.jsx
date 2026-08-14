@@ -5,7 +5,7 @@ import { filterData, filterMultipliers } from '../lib/constants'
 const DashboardContext = createContext(null)
 
 const initialFilters = {
-  fiscalyear: '', fiscalquarter: '', fiscalweek: '',
+  fiscalquarter: '',
   region: '', subregion: '', country: '',
   channel: '', offering: '', queue: '',
 }
@@ -47,7 +47,6 @@ function reducer(state, action) {
       const filters = { ...state.filters, [action.id]: action.value }
       if (action.id === 'region') { filters.subregion = ''; filters.country = '' }
       if (action.id === 'subregion') { filters.country = '' }
-      if (action.id === 'fiscalweek' && state.viewMode !== 'weekly') filters.fiscalweek = ''
       const mult = computeMultiplier(filters)
       return { ...state, filters, weeklyData: buildInitialWeeklyData(mult) }
     }
@@ -97,7 +96,7 @@ export function DashboardProvider({ children }) {
     setTimeout(() => dispatch({ type: 'REMOVE_TOAST', id }), 3000)
   }, [])
 
-  const fiscalYear = state.filters.fiscalyear || 'FY26'
+  const fiscalYear = state.filters.fiscalquarter.slice(0, 4) || 'FY26'
   const periods = useMemo(() => getPeriods(state.viewMode, fiscalYear), [state.viewMode, fiscalYear])
   const derived = useMemo(() => computeDerivedWeekly(state.weeklyData), [state.weeklyData])
 

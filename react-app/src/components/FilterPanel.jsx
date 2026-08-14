@@ -1,7 +1,9 @@
 import React from 'react'
 import { useDashboard } from '../context/DashboardContext.jsx'
 
-const WEEK_OPTIONS = Array.from({ length: 13 }, (_, i) => `Week ${i + 1}`)
+const FISCAL_QUARTER_OPTIONS = ['FY24', 'FY25', 'FY26', 'FY27'].flatMap((fy) =>
+  ['Q1', 'Q2', 'Q3', 'Q4'].map((q) => `${fy}${q}`)
+)
 
 export default function FilterPanel() {
   const { state, dispatch, subRegionOptions, countryOptions, activeFilterCount, showToast } = useDashboard()
@@ -18,7 +20,7 @@ export default function FilterPanel() {
   }
 
   const activeTags = Object.entries({
-    fiscalyear: 'Fiscal Year', fiscalquarter: 'Fiscal Quarter', fiscalweek: 'Fiscal Week',
+    fiscalquarter: 'Fiscal Quarter',
     region: 'Region', subregion: 'Sub Region', country: 'Country',
     channel: 'Channel', offering: 'Offering', queue: 'Queue',
   }).filter(([id]) => f[id])
@@ -28,28 +30,12 @@ export default function FilterPanel() {
       <div className="filter-panel-title">🔍 Filters</div>
 
       <div className="filter-group">
-        <label>Fiscal Year</label>
-        <select value={f.fiscalyear} onChange={(e) => setFilter('fiscalyear', e.target.value)}>
-          <option value="">All Fiscal Years</option>
-          <option>FY24</option><option>FY25</option><option>FY26</option><option>FY27</option>
-        </select>
-      </div>
-      <div className="filter-group">
         <label>Fiscal Quarter</label>
         <select value={f.fiscalquarter} onChange={(e) => setFilter('fiscalquarter', e.target.value)}>
           <option value="">All Quarters</option>
-          <option>Q1</option><option>Q2</option><option>Q3</option><option>Q4</option>
+          {FISCAL_QUARTER_OPTIONS.map((fq) => <option key={fq}>{fq}</option>)}
         </select>
       </div>
-      {state.viewMode === 'weekly' && (
-        <div className="filter-group">
-          <label>Fiscal Week</label>
-          <select value={f.fiscalweek} onChange={(e) => setFilter('fiscalweek', e.target.value)}>
-            <option value="">All Weeks</option>
-            {WEEK_OPTIONS.map((w) => <option key={w}>{w}</option>)}
-          </select>
-        </div>
-      )}
 
       <div className="filter-divider" />
 
