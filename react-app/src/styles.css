@@ -145,6 +145,10 @@ body{font-family:var(--font);background:var(--bg-page);color:var(--text-primary)
 .chart-row.three{grid-template-columns:repeat(3,1fr);}
 .chart-row.two{grid-template-columns:repeat(2,1fr);}
 .chart-card{background:var(--bg-card);border-radius:var(--radius);padding:14px;border:1px solid var(--border);transition:all var(--transition);position:relative;}
+/* MUI Card defaults to overflow:hidden, which (with a canvas descendant) makes Chrome's compositing
+   collapse the card's auto-height to just its non-canvas content. Higher specificity than MUI's own
+   single-class rule so this wins regardless of emotion's runtime injection order. */
+.MuiCard-root.chart-card,.MuiCard-root.trend-card{overflow:visible;}
 .chart-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:nowrap;}
 .chart-card-header h3{font-size:12px;font-weight:700;color:var(--text-primary);}
 .chart-card-title{font-size:13px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:0;}
