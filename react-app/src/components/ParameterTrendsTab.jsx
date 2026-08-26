@@ -25,7 +25,6 @@ export default function ParameterTrendsTab() {
             return (
               <DDSAccordionItem
                 key={group}
-                className="trend-group-header"
                 title={TREND_GROUP_META[group]}
                 expanded={!collapsed}
                 onToggle={() => toggleTrendGroup(group)}

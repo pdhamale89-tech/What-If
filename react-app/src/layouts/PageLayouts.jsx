@@ -13,7 +13,7 @@ export function StandardLayout({ children, sx, ...rest }) {
 // <SidebarLayout sidebar={<FilterPanel />}>{mainContent}</SidebarLayout>
 export function SidebarLayout({ sidebar, children, sx, ...rest }) {
   return (
-    <Box sx={{ display: 'flex', flex: 1, minHeight: 0, ...sx }} {...rest}>
+    <Box sx={{ display: 'flex', flex: 1, minWidth: 0, minHeight: 0, ...sx }} {...rest}>
       {sidebar}
       <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {children}
