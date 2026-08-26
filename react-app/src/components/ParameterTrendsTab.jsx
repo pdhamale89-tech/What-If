@@ -2,6 +2,7 @@ import React from 'react'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { weeklyRowDefs, TREND_GROUP_META } from '../lib/constants'
 import TrendCard from './TrendCard.jsx'
+import { DDSAccordion, DDSAccordionItem } from '../components/dds'
 
 export default function ParameterTrendsTab() {
   const { state, dispatch, periods, derived } = useDashboard()
@@ -17,30 +18,30 @@ export default function ParameterTrendsTab() {
           <span><span className="dot sq" style={{ background: 'var(--teal)' }}></span>A2 (Optimistic) — bar</span>
           <span><span className="dot" style={{ background: '#a855f7' }}></span>Δ (A2−A1) — line, right axis</span>
         </div>
-        <div>
+        <DDSAccordion>
           {Object.keys(TREND_GROUP_META).map((group) => {
             const collapsed = !!collapsedTrendGroups[group]
-            const chevron = collapsed ? '▶' : '▼'
             const rowsInGroup = weeklyRowDefs.filter((r) => !r.header && r.groups && r.groups[0] === group)
             return (
-              <React.Fragment key={group}>
-                <div className="trend-group-header" onClick={() => toggleTrendGroup(group)}>
-                  <span className="wk-chevron">{chevron}</span> {TREND_GROUP_META[group]}
+              <DDSAccordionItem
+                key={group}
+                className="trend-group-header"
+                title={TREND_GROUP_META[group]}
+                expanded={!collapsed}
+                onToggle={() => toggleTrendGroup(group)}
+              >
+                <div className="trend-grid">
+                  {rowsInGroup.map((r) => (
+                    <React.Fragment key={r.key}>
+                      {r.key === 'aux1' && <div className="trend-subheading">AUX States</div>}
+                      <TrendCard r={r} weeklyData={weeklyData} derived={derived} periods={periods} theme={theme} />
+                    </React.Fragment>
+                  ))}
                 </div>
-                {!collapsed && (
-                  <div className="trend-grid">
-                    {rowsInGroup.map((r) => (
-                      <React.Fragment key={r.key}>
-                        {r.key === 'aux1' && <div className="trend-subheading">AUX States</div>}
-                        <TrendCard r={r} weeklyData={weeklyData} derived={derived} periods={periods} theme={theme} />
-                      </React.Fragment>
-                    ))}
-                  </div>
-                )}
-              </React.Fragment>
+              </DDSAccordionItem>
             )
           })}
-        </div>
+        </DDSAccordion>
       </div>
     </div>
   )

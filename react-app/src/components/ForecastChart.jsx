@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react'
 import { Chart } from 'react-chartjs-2'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { aggVals, fmt, chartColors } from '../lib/calc'
 import { endsOnly } from '../lib/chartSetup'
+import { DDSCard, DDSTabs, DDSTab, DDSTooltip, DDSIconButton } from '../components/dds'
 
 const VIEW_SUFFIX = { weekly: '(Weekly)', quarterly: '(Quarterly)', monthly: '(Monthly)' }
 
@@ -57,30 +59,35 @@ export default function ForecastChart() {
   }, [weeklyData, periods, forecastMetric, theme])
 
   return (
-    <div className="chart-card">
+    <DDSCard className="chart-card">
       <div className="chart-card-header">
         <h3 className="chart-card-title">FORECAST COMPARISON {VIEW_SUFFIX[viewMode]}</h3>
         <div className="chart-card-controls">
-          <div className="seg-toggle">
-            <button className={`seg-btn${forecastMetric === 'ar' ? ' active' : ''}`} onClick={() => setForecastMetric('ar')}>AR%</button>
-            <button className={`seg-btn${forecastMetric === 'fcmod' ? ' active' : ''}`} onClick={() => setForecastMetric('fcmod')}>Fcst Mod%</button>
-          </div>
-          <div className="chart-info-btn">i
-            <div className="chart-info-tooltip">
-              <div className="tip-title">💡 About This Chart</div>
-              A1 vs A2 handled volume trend per period, with a trend line on the right axis.
-              <ul>
-                <li><b>Blue line</b> = A1 volume</li>
-                <li><b>Dashed teal line</b> = A2 volume</li>
-                <li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li>
-              </ul>
-            </div>
-          </div>
+          <DDSTabs size="small" value={forecastMetric} onChange={setForecastMetric}>
+            <DDSTab value="ar">AR%</DDSTab>
+            <DDSTab value="fcmod">Fcst Mod%</DDSTab>
+          </DDSTabs>
+          <DDSTooltip
+            placement="bottom-end"
+            content={
+              <>
+                <div className="tip-title">💡 About This Chart</div>
+                A1 vs A2 handled volume trend per period, with a trend line on the right axis.
+                <ul>
+                  <li><b>Blue line</b> = A1 volume</li>
+                  <li><b>Dashed teal line</b> = A2 volume</li>
+                  <li>Use the toggle to switch the right-axis line between <b>AR%</b> and <b>Forecast Mod %</b></li>
+                </ul>
+              </>
+            }
+          >
+            <DDSIconButton size="small"><InfoOutlinedIcon fontSize="small" /></DDSIconButton>
+          </DDSTooltip>
         </div>
       </div>
       <div className="chart-canvas-wrap" style={{ height: 400 }}>
         <Chart type="bar" data={data} options={options} />
       </div>
-    </div>
+    </DDSCard>
   )
 }

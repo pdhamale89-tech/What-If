@@ -1,9 +1,14 @@
 import React, { useMemo } from 'react'
 import { Chart } from 'react-chartjs-2'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { QUEUE_SL_BASE } from '../lib/constants'
 import { aggVals, fmt, chartColors } from '../lib/calc'
 import { endsOnly } from '../lib/chartSetup'
+import {
+  DDSCard, DDSButton, DDSBadge, DDSTooltip, DDSIconButton,
+  DDSMessageBar, DDSList, DDSListItem, DDSEmptyState,
+} from '../components/dds'
 
 const VIEW_SUFFIX = { weekly: '(Weekly)', quarterly: '(Quarterly)', monthly: '(Monthly)' }
 
@@ -70,8 +75,7 @@ export default function HcPlanChart() {
   const idx = hcPlanSelectedIdx
   const hasSelection = idx !== null && idx !== undefined && hcPlanLabels[idx] !== undefined
 
-  let caption = '👆 Click a bar above to see queue-level SL detail for that period'
-  let queues = [], below90 = [], insight = '', action = ''
+  let caption = '', queues = [], below90 = [], insight = '', action = ''
   if (hasSelection) {
     const label = hcPlanLabels[idx]
     const actual = hcPlanActual[idx], plan = hcPlanPlanArr[idx], sl = hcPlanSl[idx]
@@ -94,53 +98,65 @@ export default function HcPlanChart() {
   }
 
   return (
-    <div className="chart-card">
+    <DDSCard className="chart-card">
       <div className="chart-card-header">
         <h3 className="chart-card-title">Headcount Impact on SL {VIEW_SUFFIX[viewMode]}</h3>
         <div className="chart-card-controls">
-          <div className="chart-info-btn">i
-            <div className="chart-info-tooltip">
-              <div className="tip-title">💡 About This Chart</div>
-              Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.
-              <ul>
-                <li><b>Blue line</b> = Actual HC</li>
-                <li><b>Dashed orange line</b> = Plan HC</li>
-                <li><b>Purple line</b> = SL %</li>
-                <li>Click anywhere on the chart to drill into queue-level SL detail, insights and recommended action for that period</li>
-              </ul>
-            </div>
-          </div>
+          <DDSTooltip
+            placement="bottom-end"
+            content={
+              <>
+                <div className="tip-title">💡 About This Chart</div>
+                Actual (A1) vs Plan (A2) headcount per period, from the Parameter View, with SL% trend on the right axis.
+                <ul>
+                  <li><b>Blue line</b> = Actual HC</li>
+                  <li><b>Dashed orange line</b> = Plan HC</li>
+                  <li><b>Purple line</b> = SL %</li>
+                  <li>Click anywhere on the chart to drill into queue-level SL detail, insights and recommended action for that period</li>
+                </ul>
+              </>
+            }
+          >
+            <DDSIconButton size="small"><InfoOutlinedIcon fontSize="small" /></DDSIconButton>
+          </DDSTooltip>
         </div>
       </div>
       <div className="chart-canvas-wrap" style={{ height: 300 }}>
         <Chart type="line" data={data} options={options} />
       </div>
-      <div className="queue-sl-caption">
-        {caption}
-        {hasSelection && (
-          <span className="queue-sl-reset" onClick={() => dispatch({ type: 'SET_HC_PLAN_SELECTED', idx: null })}> ✕ Clear</span>
-        )}
-      </div>
+      {hasSelection && (
+        <p className="queue-sl-caption">
+          {caption}
+          <DDSButton variant="link" size="small" onClick={() => dispatch({ type: 'SET_HC_PLAN_SELECTED', idx: null })}>✕ Clear</DDSButton>
+        </p>
+      )}
       <div className="queue-sl-list">
+        {!hasSelection && (
+          <DDSEmptyState size="small" title="No period selected" description="👆 Click a bar above to see queue-level SL detail for that period" />
+        )}
         {hasSelection && (
           below90.length
-            ? below90.map((q) => (
-              <div className="queue-sl-row" key={q.name}>
-                <span className="queue-sl-name">{q.name}</span>
-                <span className="queue-sl-metrics"><b>SL {q.sl.toFixed(1)}%</b> · HC {q.hc} vs plan {q.plan} ({q.delta >= 0 ? '+' : ''}{q.delta})</span>
-              </div>
-            ))
-            : <div className="queue-sl-row"><span className="queue-sl-name">No queues below 90% SL for {hcPlanLabels[idx]}.</span></div>
+            ? (
+              <DDSList>
+                {below90.map((q) => (
+                  <DDSListItem className="queue-sl-row" key={q.name}>
+                    <span className="queue-sl-name">{q.name}</span>
+                    <span className="queue-sl-metrics">
+                      <DDSBadge status="danger">SL {q.sl.toFixed(1)}%</DDSBadge> · HC {q.hc} vs plan {q.plan} ({q.delta >= 0 ? '+' : ''}{q.delta})
+                    </span>
+                  </DDSListItem>
+                ))}
+              </DDSList>
+            )
+            : <DDSEmptyState size="small" title="All queues meeting target" description={`No queues below 90% SL for ${hcPlanLabels[idx]}.`} />
         )}
       </div>
-      <div className="queue-sl-insight">
-        {hasSelection && (
-          <>
-            <div><span className="action-label">💡 Insight:</span> {insight}</div>
-            <div style={{ marginTop: 6 }}><span className="action-label">✅ Recommended Action:</span> {action}</div>
-          </>
-        )}
-      </div>
-    </div>
+      {hasSelection && (
+        <DDSMessageBar kind="info" className="queue-sl-insight">
+          <div><span className="action-label">💡 Insight:</span> {insight}</div>
+          <div style={{ marginTop: 6 }}><span className="action-label">✅ Recommended Action:</span> {action}</div>
+        </DDSMessageBar>
+      )}
+    </DDSCard>
   )
 }

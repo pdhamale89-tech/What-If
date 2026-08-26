@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Chart } from 'react-chartjs-2'
 import { aggVals, chartColors } from '../lib/calc'
+import { DDSCard } from '../components/dds'
 
 export default function TrendCard({ r, weeklyData, derived, periods, theme }) {
   const c = chartColors(theme)
@@ -41,11 +42,11 @@ export default function TrendCard({ r, weeklyData, derived, periods, theme }) {
   }, [r, weeklyData, derived, periods, theme])
 
   return (
-    <div className="trend-card">
+    <DDSCard className="trend-card">
       <h4>{r.label}</h4>
       <div className="trend-canvas-wrap">
         <Chart type="bar" data={data} options={options} />
       </div>
-    </div>
+    </DDSCard>
   )
 }

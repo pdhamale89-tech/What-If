@@ -1,6 +1,8 @@
 import React from 'react'
+import Box from '@mui/material/Box'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { aggVals, fmt } from '../lib/calc'
+import { DDSCard, DDSBadge } from '../components/dds'
 
 const VIEW_LABELS = {
   weekly: { kpi: 'Latest Week' },
@@ -41,26 +43,27 @@ export default function KpiRow() {
 
   return (
     <div>
-      <div className="section-title">
-        ⚡ KEY RESULTS <span className="badge">Real-time</span>
-        <span className="badge badge-period">{periodLabel}</span>
-      </div>
+      <Box className="section-title">
+        ⚡ KEY RESULTS
+        <DDSBadge status="info">Real-time</DDSBadge>
+        <DDSBadge status="brand">{periodLabel}</DDSBadge>
+      </Box>
       <div className="kpi-row">
         {kpis.map((k) => {
-          const cls = k.delta >= 0 ? 'pos' : 'neg'
+          const status = k.delta >= 0 ? 'success' : 'danger'
           const sign = k.delta >= 0 ? '+' : ''
           return (
-            <div className="kpi-card" key={k.title}>
+            <DDSCard className="kpi-card" key={k.title}>
               <div className="kpi-title">{k.title}</div>
               <div className="kpi-values">
                 <div className="kpi-val">{k.v1}<small>A1</small></div>
                 <div className="kpi-val">{k.v2}<small>A2</small></div>
               </div>
-              <span className={`kpi-delta ${cls}`}>
+              <DDSBadge status={status} className="kpi-delta">
                 {k.delta >= 0 ? '▲' : '▼'} {sign}{k.delta.toFixed(1)}{k.suffix || ''}
                 {k.pct !== null ? ` (${sign}${k.pct.toFixed(2)}%)` : ''}
-              </span>
-            </div>
+              </DDSBadge>
+            </DDSCard>
           )
         })}
       </div>

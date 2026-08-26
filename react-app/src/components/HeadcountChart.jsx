@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react'
 import { Chart } from 'react-chartjs-2'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { HEADCOUNT_BAR_STAGES, HEADCOUNT_TREND_METRICS } from '../lib/constants'
 import { aggVals, fmt, chartColors, hexToRgba } from '../lib/calc'
 import { endsOnly } from '../lib/chartSetup'
+import { DDSCard, DDSDropdown, DDSOption, DDSTooltip, DDSIconButton } from '../components/dds'
 
 const VIEW_SUFFIX = { weekly: '(Weekly)', quarterly: '(Quarterly)', monthly: '(Monthly)' }
 
@@ -11,11 +13,6 @@ export default function HeadcountChart() {
   const { state, dispatch, periods } = useDashboard()
   const { weeklyData, viewMode, headcountTrendKeys, theme } = state
   const c = chartColors(theme)
-
-  const onSelectChange = (e) => {
-    const keys = Array.from(e.target.selectedOptions).map((o) => o.value)
-    dispatch({ type: 'SET_HEADCOUNT_TREND_KEYS', keys })
-  }
 
   const { data, options } = useMemo(() => {
     const labels = periods.map((p) => p.label)
@@ -60,31 +57,42 @@ export default function HeadcountChart() {
   }, [weeklyData, periods, headcountTrendKeys, theme])
 
   return (
-    <div className="chart-card">
+    <DDSCard className="chart-card">
       <div className="chart-card-header">
         <h3 className="chart-card-title">HEADCOUNT DETAILS {VIEW_SUFFIX[viewMode]}</h3>
         <div className="chart-card-controls">
-          <select className="chart-select chart-select-multi" multiple size={4} value={headcountTrendKeys} onChange={onSelectChange}>
-            {HEADCOUNT_TREND_METRICS.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
-          </select>
-          <div className="chart-info-btn">i
-            <div className="chart-info-tooltip">
-              <div className="tip-title">💡 About This Chart</div>
-              Actual HC, Movement In and Movement Out always show as a stacked bar per period, from the Parameter View.
-              <ul>
-                <li><b>Stacked bars (left axis)</b> = Actual HC (teal) + Movement In (amber) + Movement Out (purple)</li>
-                <li>One stack per scenario — A1 solid colors, A2 lighter shades, side by side</li>
-                <li><b>Hiring, Training, OJT (left axis)</b> = whole-number trend lines, same axis as the bars</li>
-                <li><b>Attrition% (right axis)</b> = percentage trend line</li>
-                <li>Ctrl/Cmd-click to select multiple from the list; each selection adds its own A1/A2 trend line</li>
-              </ul>
-            </div>
-          </div>
+          <DDSDropdown
+            multiple
+            value={headcountTrendKeys}
+            onChange={(keys) => dispatch({ type: 'SET_HEADCOUNT_TREND_KEYS', keys })}
+            renderValue={(selected) => selected.map((k) => HEADCOUNT_TREND_METRICS.find((m) => m.key === k)?.label).join(', ')}
+            sx={{ minWidth: 160 }}
+          >
+            {HEADCOUNT_TREND_METRICS.map((m) => <DDSOption key={m.key} value={m.key}>{m.label}</DDSOption>)}
+          </DDSDropdown>
+          <DDSTooltip
+            placement="bottom-end"
+            content={
+              <>
+                <div className="tip-title">💡 About This Chart</div>
+                Actual HC, Movement In and Movement Out always show as a stacked bar per period, from the Parameter View.
+                <ul>
+                  <li><b>Stacked bars (left axis)</b> = Actual HC (teal) + Movement In (amber) + Movement Out (purple)</li>
+                  <li>One stack per scenario — A1 solid colors, A2 lighter shades, side by side</li>
+                  <li><b>Hiring, Training, OJT (left axis)</b> = whole-number trend lines, same axis as the bars</li>
+                  <li><b>Attrition% (right axis)</b> = percentage trend line</li>
+                  <li>Ctrl/Cmd-click to select multiple from the list; each selection adds its own A1/A2 trend line</li>
+                </ul>
+              </>
+            }
+          >
+            <DDSIconButton size="small"><InfoOutlinedIcon fontSize="small" /></DDSIconButton>
+          </DDSTooltip>
         </div>
       </div>
       <div className="chart-canvas-wrap" style={{ height: 400 }}>
         <Chart type="bar" data={data} options={options} />
       </div>
-    </div>
+    </DDSCard>
   )
 }

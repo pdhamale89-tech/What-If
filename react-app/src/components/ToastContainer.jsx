@@ -1,11 +1,12 @@
 import React from 'react'
 import { useDashboard } from '../context/DashboardContext.jsx'
+import { DDSNotificationContainer, DDSNotification } from '../components/dds'
 
 export default function ToastContainer() {
   const { state } = useDashboard()
   return (
-    <div className="toast-container">
-      {state.toasts.map((t) => <div className="toast" key={t.id}>{t.msg}</div>)}
-    </div>
+    <DDSNotificationContainer placement="bottom-end">
+      {state.toasts.map((t) => <DDSNotification key={t.id}>{t.msg}</DDSNotification>)}
+    </DDSNotificationContainer>
   )
 }

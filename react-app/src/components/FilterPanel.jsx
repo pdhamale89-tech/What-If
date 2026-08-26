@@ -1,5 +1,8 @@
 import React from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 import { useDashboard } from '../context/DashboardContext.jsx'
+import { DDSFilter, DDSFormField, DDSLabel, DDSDropdown, DDSOption, DDSButton, DDSTag, DDSDivider } from '../components/dds'
 
 const FISCAL_QUARTER_OPTIONS = ['FY24', 'FY25', 'FY26', 'FY27'].flatMap((fy) =>
   ['Q1', 'Q2', 'Q3', 'Q4'].map((q) => `${fy}${q}`)
@@ -26,78 +29,90 @@ export default function FilterPanel() {
   }).filter(([id]) => f[id])
 
   return (
-    <div className="filter-panel">
-      <div className="filter-panel-title">🔍 Filters</div>
+    <DDSFilter className="filter-panel">
+      <Typography className="filter-panel-title">🔍 Filters</Typography>
 
-      <div className="filter-group">
-        <label>Fiscal Quarter</label>
-        <select value={f.fiscalquarter} onChange={(e) => setFilter('fiscalquarter', e.target.value)}>
-          <option value="">All Quarters</option>
-          {FISCAL_QUARTER_OPTIONS.map((fq) => <option key={fq}>{fq}</option>)}
-        </select>
-      </div>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Fiscal Quarter</DDSLabel>
+        <DDSDropdown value={f.fiscalquarter} onChange={(v) => setFilter('fiscalquarter', v)} displayEmpty>
+          <DDSOption value="">All Quarters</DDSOption>
+          {FISCAL_QUARTER_OPTIONS.map((fq) => <DDSOption key={fq} value={fq}>{fq}</DDSOption>)}
+        </DDSDropdown>
+      </DDSFormField>
 
-      <div className="filter-divider" />
+      <DDSDivider className="filter-divider" />
 
-      <div className="filter-group">
-        <label>Region</label>
-        <select value={f.region} onChange={(e) => setFilter('region', e.target.value)}>
-          <option value="">All Regions</option>
-          <option>Americas</option><option>EMEA</option><option>APJ</option>
-        </select>
-      </div>
-      <div className="filter-group">
-        <label>Sub Region</label>
-        <select value={f.subregion} onChange={(e) => setFilter('subregion', e.target.value)}>
-          <option value="">All Sub Regions</option>
-          {subRegionOptions.map((sr) => <option key={sr}>{sr}</option>)}
-        </select>
-      </div>
-      <div className="filter-group">
-        <label>Country</label>
-        <select value={f.country} onChange={(e) => setFilter('country', e.target.value)}>
-          <option value="">All Countries</option>
-          {countryOptions.map((c) => <option key={c}>{c}</option>)}
-        </select>
-      </div>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Region</DDSLabel>
+        <DDSDropdown value={f.region} onChange={(v) => setFilter('region', v)} displayEmpty>
+          <DDSOption value="">All Regions</DDSOption>
+          <DDSOption value="Americas">Americas</DDSOption>
+          <DDSOption value="EMEA">EMEA</DDSOption>
+          <DDSOption value="APJ">APJ</DDSOption>
+        </DDSDropdown>
+      </DDSFormField>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Sub Region</DDSLabel>
+        <DDSDropdown value={f.subregion} onChange={(v) => setFilter('subregion', v)} displayEmpty>
+          <DDSOption value="">All Sub Regions</DDSOption>
+          {subRegionOptions.map((sr) => <DDSOption key={sr} value={sr}>{sr}</DDSOption>)}
+        </DDSDropdown>
+      </DDSFormField>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Country</DDSLabel>
+        <DDSDropdown value={f.country} onChange={(v) => setFilter('country', v)} displayEmpty>
+          <DDSOption value="">All Countries</DDSOption>
+          {countryOptions.map((c) => <DDSOption key={c} value={c}>{c}</DDSOption>)}
+        </DDSDropdown>
+      </DDSFormField>
 
-      <div className="filter-divider" />
+      <DDSDivider className="filter-divider" />
 
-      <div className="filter-group">
-        <label>Channel</label>
-        <select value={f.channel} onChange={(e) => setFilter('channel', e.target.value)}>
-          <option value="">All Channels</option>
-          <option>Voice</option><option>Chat</option><option>Email</option><option>Social Media</option><option>Self-Service</option>
-        </select>
-      </div>
-      <div className="filter-group">
-        <label>Offering</label>
-        <select value={f.offering} onChange={(e) => setFilter('offering', e.target.value)}>
-          <option value="">All Offerings</option>
-          <option>ProSupport</option><option>ProSupport Plus</option><option>Basic Support</option><option>Premium Support</option><option>Managed Services</option>
-        </select>
-      </div>
-      <div className="filter-group">
-        <label>Combined Queue Name</label>
-        <select value={f.queue} onChange={(e) => setFilter('queue', e.target.value)}>
-          <option value="">All Queues</option>
-          <option>Enterprise_T1_Voice</option><option>Enterprise_T2_Voice</option><option>SMB_T1_Chat</option>
-          <option>SMB_T2_Voice</option><option>Consumer_T1_Voice</option><option>Consumer_T1_Chat</option>
-          <option>Premium_Escalation</option><option>Managed_Svc_Queue</option>
-        </select>
-      </div>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Channel</DDSLabel>
+        <DDSDropdown value={f.channel} onChange={(v) => setFilter('channel', v)} displayEmpty>
+          <DDSOption value="">All Channels</DDSOption>
+          <DDSOption value="Voice">Voice</DDSOption>
+          <DDSOption value="Chat">Chat</DDSOption>
+          <DDSOption value="Email">Email</DDSOption>
+          <DDSOption value="Social Media">Social Media</DDSOption>
+          <DDSOption value="Self-Service">Self-Service</DDSOption>
+        </DDSDropdown>
+      </DDSFormField>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Offering</DDSLabel>
+        <DDSDropdown value={f.offering} onChange={(v) => setFilter('offering', v)} displayEmpty>
+          <DDSOption value="">All Offerings</DDSOption>
+          <DDSOption value="ProSupport">ProSupport</DDSOption>
+          <DDSOption value="ProSupport Plus">ProSupport Plus</DDSOption>
+          <DDSOption value="Basic Support">Basic Support</DDSOption>
+          <DDSOption value="Premium Support">Premium Support</DDSOption>
+          <DDSOption value="Managed Services">Managed Services</DDSOption>
+        </DDSDropdown>
+      </DDSFormField>
+      <DDSFormField className="filter-group">
+        <DDSLabel>Combined Queue Name</DDSLabel>
+        <DDSDropdown value={f.queue} onChange={(v) => setFilter('queue', v)} displayEmpty>
+          <DDSOption value="">All Queues</DDSOption>
+          <DDSOption value="Enterprise_T1_Voice">Enterprise_T1_Voice</DDSOption>
+          <DDSOption value="Enterprise_T2_Voice">Enterprise_T2_Voice</DDSOption>
+          <DDSOption value="SMB_T1_Chat">SMB_T1_Chat</DDSOption>
+          <DDSOption value="SMB_T2_Voice">SMB_T2_Voice</DDSOption>
+          <DDSOption value="Consumer_T1_Voice">Consumer_T1_Voice</DDSOption>
+          <DDSOption value="Consumer_T1_Chat">Consumer_T1_Chat</DDSOption>
+          <DDSOption value="Premium_Escalation">Premium_Escalation</DDSOption>
+          <DDSOption value="Managed_Svc_Queue">Managed_Svc_Queue</DDSOption>
+        </DDSDropdown>
+      </DDSFormField>
 
-      <div className="filter-divider" />
+      <DDSDivider className="filter-divider" />
 
-      <button className="filter-reset-btn" onClick={clearFilters}>✕ Clear Filters</button>
-      <div className="filter-active-tags">
+      <DDSButton status="danger" variant="outlined" fullWidth onClick={clearFilters}>✕ Clear Filters</DDSButton>
+      <Box className="filter-active-tags">
         {activeTags.map(([id, label]) => (
-          <span className="filter-tag" key={id}>
-            {label}: {f[id]}
-            <span className="tag-remove" onClick={() => setFilter(id, '')}>✕</span>
-          </span>
+          <DDSTag key={id} onRemove={() => setFilter(id, '')}>{label}: {f[id]}</DDSTag>
         ))}
-      </div>
-    </div>
+      </Box>
+    </DDSFilter>
   )
 }

@@ -2,6 +2,10 @@ import React, { useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { weeklyRowDefs } from '../lib/constants'
 import { idxAll, aggVals } from '../lib/calc'
+import {
+  DDSCard, DDSButton, DDSFootNote,
+  DDSTable, DDSTableHead, DDSTableBody, DDSTableRow, DDSTableCell,
+} from '../components/dds'
 
 export default function ExportTab() {
   const { state, derived, showToast } = useDashboard()
@@ -44,41 +48,52 @@ export default function ExportTab() {
   return (
     <div className="tab-content active" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
       <div className="export-panel">
-        <div className="export-card">
+        <DDSCard className="export-card">
           <h2>📊 Scenario Summary</h2>
           <div className="summary-grid">
             {summaryStats.map((s) => (
-              <div className="summary-stat" key={s.l}>
+              <DDSCard variant="subtle" className="summary-stat" key={s.l}>
                 <div className="label">{s.l}</div>
                 <div className="val">{s.v1}</div>
                 <div className="sub">A2: {s.v2}</div>
-              </div>
+              </DDSCard>
             ))}
           </div>
-        </div>
-        <div className="export-card">
+        </DDSCard>
+        <DDSCard className="export-card">
           <h2>📋 Full Parameter Comparison (13-Week Horizon)</h2>
-          <table className="data-table">
-            <thead><tr><th>#</th><th>Parameter</th><th>A1 (Baseline)</th><th>A2 (Optimistic)</th><th>Δ (A2-A1)</th></tr></thead>
-            <tbody>
+          <DDSTable className="data-table">
+            <DDSTableHead>
+              <DDSTableRow>
+                <DDSTableCell component="th">#</DDSTableCell>
+                <DDSTableCell component="th">Parameter</DDSTableCell>
+                <DDSTableCell component="th">A1 (Baseline)</DDSTableCell>
+                <DDSTableCell component="th">A2 (Optimistic)</DDSTableCell>
+                <DDSTableCell component="th">Δ (A2-A1)</DDSTableCell>
+              </DDSTableRow>
+            </DDSTableHead>
+            <DDSTableBody>
               {rows.map((r) => {
                 const color = r.delta > 0 ? 'var(--green)' : r.delta < 0 ? 'var(--red)' : 'var(--text-muted)'
                 return (
-                  <tr key={r.n}>
-                    <td>{r.n}</td><td>{r.label}</td><td>{r.v1}</td><td>{r.v2}</td>
-                    <td style={{ color, fontWeight: 600 }}>{r.delta >= 0 ? '+' : ''}{r.delta.toFixed(1)}</td>
-                  </tr>
+                  <DDSTableRow key={r.n}>
+                    <DDSTableCell>{r.n}</DDSTableCell>
+                    <DDSTableCell>{r.label}</DDSTableCell>
+                    <DDSTableCell>{r.v1}</DDSTableCell>
+                    <DDSTableCell>{r.v2}</DDSTableCell>
+                    <DDSTableCell style={{ color, fontWeight: 600 }}>{r.delta >= 0 ? '+' : ''}{r.delta.toFixed(1)}</DDSTableCell>
+                  </DDSTableRow>
                 )
               })}
-            </tbody>
-          </table>
-        </div>
-        <div className="export-card">
+            </DDSTableBody>
+          </DDSTable>
+        </DDSCard>
+        <DDSCard className="export-card">
           <h2>📤 Export Options</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8 }}>Download current scenario data or generate a printable report.</p>
-          <button className="export-btn csv" onClick={exportCSV}>📥 Export to CSV</button>
-          <button className="export-btn pdf" onClick={() => window.print()}>🖨 Export to PDF</button>
-        </div>
+          <DDSFootNote>Download current scenario data or generate a printable report.</DDSFootNote>
+          <DDSButton status="brand" onClick={exportCSV}>📥 Export to CSV</DDSButton>
+          <DDSButton status="info" onClick={() => window.print()}>🖨 Export to PDF</DDSButton>
+        </DDSCard>
       </div>
     </div>
   )

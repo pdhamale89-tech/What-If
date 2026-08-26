@@ -1,7 +1,13 @@
 import React, { useMemo } from 'react'
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
+import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import { useDashboard } from '../context/DashboardContext.jsx'
 import { idxAll, aggVals, fmt } from '../lib/calc'
 import { WEEKS } from '../lib/constants'
+import {
+  DDSIconButton, DDSTextArea, DDSButton, DDSFootNote,
+  DDSTable, DDSTableHead, DDSTableBody, DDSTableRow, DDSTableCell, DDSEmptyState,
+} from '../components/dds'
 
 function useInsights(weeklyData, derived) {
   return useMemo(() => {
@@ -42,38 +48,52 @@ export default function RightPanel() {
 
   return (
     <>
-      <div
+      <DDSIconButton
         className="panel-toggle"
-        onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
         title={rightPanelCollapsed ? 'Expand panel' : 'Collapse panel'}
+        onClick={() => dispatch({ type: 'TOGGLE_RIGHT_PANEL' })}
       >
-        {rightPanelCollapsed ? '‹' : '›'}
-      </div>
+        {rightPanelCollapsed ? <ChevronLeftIcon fontSize="small" /> : <ChevronRightIcon fontSize="small" />}
+      </DDSIconButton>
       <div className={`right-panel${rightPanelCollapsed ? ' collapsed' : ''}`}>
         <div className="right-panel-inner">
           <div className="right-section">
             <div className="right-section-title">📝 SCENARIO NOTES</div>
             <div className="notes-wrap">
-              <textarea
+              <DDSTextArea
                 className="notes-textarea"
                 placeholder="Type your scenario notes here..."
                 value={notesText}
-                onChange={(e) => dispatch({ type: 'SET_NOTES_TEXT', text: e.target.value })}
+                onChange={(v) => dispatch({ type: 'SET_NOTES_TEXT', text: v })}
               />
-              <button className="save-note-btn" onClick={saveNote}>💾 Save Note</button>
+              <DDSButton size="small" onClick={saveNote}>💾 Save Note</DDSButton>
             </div>
           </div>
           <div className="right-section">
             <div className="notes-summary-section">
               <div className="ns-title">📋 NOTES SUMMARY</div>
-              <table className="notes-history-table">
-                <thead><tr><th>Previous SCENARIO NOTES</th><th>Last Updated</th><th>Updated By</th></tr></thead>
-                <tbody>
-                  {savedNotes.length === 0
-                    ? <tr><td colSpan={3} className="no-notes">No notes saved yet. Write a note above and click Save.</td></tr>
-                    : savedNotes.map((n, i) => <tr key={i}><td>{n.text}</td><td>{n.date}</td><td>{n.user}</td></tr>)}
-                </tbody>
-              </table>
+              {savedNotes.length === 0 ? (
+                <DDSEmptyState size="small" title="No notes yet" description="Write a note above and click Save." />
+              ) : (
+                <DDSTable className="notes-history-table">
+                  <DDSTableHead>
+                    <DDSTableRow>
+                      <DDSTableCell component="th">Previous SCENARIO NOTES</DDSTableCell>
+                      <DDSTableCell component="th">Last Updated</DDSTableCell>
+                      <DDSTableCell component="th">Updated By</DDSTableCell>
+                    </DDSTableRow>
+                  </DDSTableHead>
+                  <DDSTableBody>
+                    {savedNotes.map((n, i) => (
+                      <DDSTableRow key={i}>
+                        <DDSTableCell>{n.text}</DDSTableCell>
+                        <DDSTableCell>{n.date}</DDSTableCell>
+                        <DDSTableCell>{n.user}</DDSTableCell>
+                      </DDSTableRow>
+                    ))}
+                  </DDSTableBody>
+                </DDSTable>
+              )}
             </div>
           </div>
           <div className="right-section">
@@ -86,7 +106,7 @@ export default function RightPanel() {
                 <span className="coming-soon-badge">🚀 Coming Soon</span>
               </div>
             </div>
-            <div className="insights-note">Auto-generated from the current scenario data (rule-based summary).</div>
+            <DDSFootNote className="insights-note">Auto-generated from the current scenario data (rule-based summary).</DDSFootNote>
           </div>
         </div>
       </div>

@@ -1,0 +1,39 @@
+/* Dell Design System v3 tokens — from the dds-dashboard-development skill reference. */
+:root {
+  --dds-color-brand-blue: #0076ce;
+  --dds-color-text-primary: #171717;
+  --dds-color-text-secondary: #5f6368;
+  --dds-color-bg-primary: #ffffff;
+  --dds-color-bg-secondary: #f8f9fa;
+  --dds-color-border-default: #dadce0;
+  --dds-color-success: #0f9d58;
+  --dds-color-warning: #f4b400;
+  --dds-color-error: #d93025;
+
+  --dds-font-family: 'Roboto Flex', sans-serif;
+  --dds-font-weight-light: 300;
+  --dds-font-weight-regular: 400;
+  --dds-font-weight-medium: 500;
+
+  --dds-space-1: 4px;
+  --dds-space-2: 8px;
+  --dds-space-3: 12px;
+  --dds-space-4: 16px;
+  --dds-space-6: 24px;
+  --dds-space-8: 32px;
+  --dds-space-12: 48px;
+
+  --dds-radius-input: 2px;
+  --dds-radius-button: 4px;
+  --dds-radius-card: 8px;
+}
+
+/* Dark-mode variants — the skill only documents light tokens; these mirror the app's existing
+   dark palette so DDS components stay legible when the app's theme toggle is set to dark. */
+[data-theme="dark"] {
+  --dds-color-text-primary: #e2e8f0;
+  --dds-color-text-secondary: #94a3b8;
+  --dds-color-bg-primary: #1a2332;
+  --dds-color-bg-secondary: #0f1923;
+  --dds-color-border-default: #1e3a5f;
+}
